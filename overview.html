@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BudgetPlanner — Architecture Overview</title>
+  <style>
+    :root {
+      --bg:       #0F1117;
+      --surface:  #1A1D27;
+      --elevated: #222534;
+      --border:   #2E3146;
+      --t1:       #F1F5F9;
+      --t2:       #94A3B8;
+      --t3:       #475569;
+      --violet:   #6C63FF;
+      --green:    #22C55E;
+      --red:      #EF4444;
+      --amber:    #F59E0B;
+      --blue:     #3B82F6;
+      --teal:     #14B8A6;
+      --orange:   #F97316;
+      --pink:     #EC4899;
+      --purple:   #A855F7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--t1);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .header .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .header .logo-icon {
+      width: 40px; height: 40px;
+      background: var(--violet);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .header h1 { font-size: 26px; font-weight: 700; }
+    .header p  { color: var(--t2); font-size: 13px; margin-top: 6px; }
+
+    /* ── Section labels ── */
+    .section-label {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--t3);
+      margin-bottom: 12px;
+    }
+
+    /* ── Generic box ── */
+    .box {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      min-width: 130px;
+      position: relative;
+    }
+    .box .tag {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 99px;
+      margin-bottom: 2px;
+    }
+    .box .name { font-size: 13px; font-weight: 600; color: var(--t1); }
+    .box .sub  { font-size: 11px; color: var(--t3); line-height: 1.5; }
+
+    /* accent dots on left border */
+    .box::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 20%; bottom: 20%;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+    }
+
+    /* ── Color variants ── */
+    .c-violet { border-color: rgba(108,99,255,.35); }
+    .c-violet::before { background: var(--violet); }
+    .c-violet .tag { background: rgba(108,99,255,.15); color: var(--violet); }
+
+    .c-green { border-color: rgba(34,197,94,.35); }
+    .c-green::before { background: var(--green); }
+    .c-green .tag { background: rgba(34,197,94,.12); color: var(--green); }
+
+    .c-blue { border-color: rgba(59,130,246,.35); }
+    .c-blue::before { background: var(--blue); }
+    .c-blue .tag { background: rgba(59,130,246,.12); color: var(--blue); }
+
+    .c-amber { border-color: rgba(245,158,11,.35); }
+    .c-amber::before { background: var(--amber); }
+    .c-amber .tag { background: rgba(245,158,11,.12); color: var(--amber); }
+
+    .c-teal { border-color: rgba(20,184,166,.35); }
+    .c-teal::before { background: var(--teal); }
+    .c-teal .tag { background: rgba(20,184,166,.12); color: var(--teal); }
+
+    .c-pink { border-color: rgba(236,72,153,.35); }
+    .c-pink::before { background: var(--pink); }
+    .c-pink .tag { background: rgba(236,72,153,.12); color: var(--pink); }
+
+    .c-orange { border-color: rgba(249,115,22,.35); }
+    .c-orange::before { background: var(--orange); }
+    .c-orange .tag { background: rgba(249,115,22,.12); color: var(--orange); }
+
+    .c-red { border-color: rgba(239,68,68,.35); }
+    .c-red::before { background: var(--red); }
+    .c-red .tag { background: rgba(239,68,68,.12); color: var(--red); }
+
+    .c-purple { border-color: rgba(168,85,247,.35); }
+    .c-purple::before { background: var(--purple); }
+    .c-purple .tag { background: rgba(168,85,247,.12); color: var(--purple); }
+
+    /* ── Connector lines ── */
+    .connector-down {
+      width: 2px;
+      background: var(--border);
+      margin: 0 auto;
+    }
+    .connector-h {
+      height: 2px;
+      background: var(--border);
+    }
+
+    /* ── ROOT node (centered, wide) ── */
+    .root-wrap { display: flex; justify-content: center; }
+    .root {
+      background: linear-gradient(135deg, rgba(108,99,255,.25), rgba(108,99,255,.08));
+      border: 1.5px solid rgba(108,99,255,.5);
+      border-radius: 18px;
+      padding: 16px 28px;
+      text-align: center;
+      min-width: 220px;
+    }
+    .root .name { font-size: 16px; font-weight: 700; color: var(--t1); }
+    .root .sub  { font-size: 12px; color: var(--t2); margin-top: 4px; }
+
+    /* ── Layer rows ── */
+    .layer {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+    }
+
+    /* Tree column = vertical spine with children */
+    .tree-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Horizontal rail container */
+    .h-rail {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+    }
+
+    /* ── Specific layout helpers ── */
+    .gap-sm  { gap: 16px; }
+    .gap-md  { gap: 24px; }
+    .gap-lg  { gap: 40px; }
+    .gap-xl  { gap: 56px; }
+    .gap-xxl { gap: 80px; }
+
+    /* children cluster */
+    .children {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ── Grid for the 5-page row ── */
+    .pages-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .page-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .page-children {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      align-items: center;
+    }
+
+    /* Divider */
+    .divider {
+      width: 100%;
+      max-width: 900px;
+      margin: 48px auto;
+      border: none;
+      border-top: 1px dashed var(--border);
+      position: relative;
+    }
+    .divider::after {
+      content: attr(data-label);
+      position: absolute;
+      top: -10px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg);
+      padding: 0 12px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--t3);
+    }
+
+    /* ── State / hooks row ── */
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 16px;
+      justify-content: center;
+    }
+
+    /* ── Data model row ── */
+    .model-grid {
+      display: grid;
+      grid-template-columns: repeat(5, auto);
+      gap: 16px;
+      justify-content: center;
+    }
+
+    /* ── Utility row ── */
+    .util-grid {
+      display: grid;
+      grid-template-columns: repeat(4, auto);
+      gap: 16px;
+      justify-content: center;
+    }
+
+    /* small pill */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--t2);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 3px 10px;
+    }
+    .pill-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+
+    /* legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      max-width: 700px;
+      margin: 0 auto 48px;
+    }
+
+    /* arrows */
+    .arrow-row {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin: 8px 0;
+    }
+    .arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 10px;
+      color: var(--t3);
+      gap: 2px;
+    }
+    .arrow span { letter-spacing: .06em; text-transform: uppercase; }
+
+    /* tech stack strip */
+    .stack-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .stack-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      color: var(--t2);
+      background: var(--elevated);
+    }
+
+    /* ── Responsive simplification ── */
+    @media (max-width: 900px) {
+      .pages-row { grid-template-columns: repeat(2, 1fr); }
+      .model-grid { grid-template-columns: repeat(2, auto); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════ -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+          <polyline points="16 7 22 7 22 13"></polyline>
+        </svg>
+      </div>
+      <span style="font-size:22px;font-weight:800;">BudgetPlanner</span>
+    </div>
+    <h1 style="font-size:14px;font-weight:400;color:var(--t2);">Architecture Overview · Component & Data Flow</h1>
+
+    <!-- Tech Stack -->
+    <div class="stack-strip" style="margin-top:18px;">
+      <span class="stack-badge" style="border-color:rgba(108,99,255,.4);color:var(--violet);">React 18</span>
+      <span class="stack-badge" style="border-color:rgba(59,130,246,.4);color:var(--blue);">TypeScript</span>
+      <span class="stack-badge" style="border-color:rgba(20,184,166,.4);color:var(--teal);">Vite 6</span>
+      <span class="stack-badge" style="border-color:rgba(34,197,94,.4);color:var(--green);">Tailwind CSS</span>
+      <span class="stack-badge" style="border-color:rgba(245,158,11,.4);color:var(--amber);">Recharts</span>
+      <span class="stack-badge" style="border-color:rgba(236,72,153,.4);color:var(--pink);">Lucide Icons</span>
+      <span class="stack-badge" style="border-color:rgba(168,85,247,.4);color:var(--purple);">localStorage</span>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       LEVEL 0 — APP ROOT
+  ══════════════════════════════════════════════ -->
+  <div class="section-label">Entry Point</div>
+  <div class="root-wrap">
+    <div class="root">
+      <div class="name">App.tsx</div>
+      <div class="sub">BudgetProvider · page router · Shell layout</div>
+    </div>
+  </div>
+
+  <div class="connector-down" style="height:32px;"></div>
+
+  <!-- ══════════════════════════════════════════════
+       LEVEL 1 — SHELL / LAYOUT
+  ══════════════════════════════════════════════ -->
+  <div class="section-label">Layout Layer</div>
+  <div class="layer gap-lg">
+
+    <div class="tree-col">
+      <div class="box c-violet">
+        <div class="tag">layout</div>
+        <div class="name">Shell.tsx</div>
+        <div class="sub">Sidebar + main wrapper</div>
+      </div>
+      <div class="connector-down" style="height:12px;"></div>
+      <div class="children">
+        <div class="box c-violet" style="min-width:110px;">
+          <div class="name" style="font-size:12px;">Sidebar.tsx</div>
+          <div class="sub">Nav · collapse</div>
+        </div>
+        <div class="box c-violet" style="min-width:110px;">
+          <div class="name" style="font-size:12px;">TopBar.tsx</div>
+          <div class="sub">Period · add CTA</div>
+        </div>
+        <div class="box c-violet" style="min-width:110px;">
+          <div class="name" style="font-size:12px;">PageContainer</div>
+          <div class="sub">Scroll · padding</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="connector-down" style="height:32px;"></div>
+
+  <!-- ══════════════════════════════════════════════
+       LEVEL 2 — 5 PAGES
+  ══════════════════════════════════════════════ -->
+  <div class="section-label">Pages</div>
+  <div class="pages-row">
+
+    <!-- Dashboard -->
+    <div class="page-col">
+      <div class="box c-violet" style="width:100%;align-items:center;text-align:center;">
+        <div class="tag">page</div>
+        <div class="name">Dashboard</div>
+      </div>
+      <div class="connector-down" style="height:12px;"></div>
+      <div class="page-children">
+        <div class="box c-teal" style="width:100%;font-size:11px;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">StatCard ×4</div>
+          <div class="sub">Balance · Income · Expenses · Net</div>
+        </div>
+        <div class="box c-amber" style="width:100%;font-size:11px;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">SpendingDonut</div>
+          <div class="sub">Category breakdown</div>
+        </div>
+        <div class="box c-green" style="width:100%;font-size:11px;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">BudgetGauge</div>
+          <div class="sub">% of budget used</div>
+        </div>
+        <div class="box c-blue" style="width:100%;font-size:11px;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">RecentTransactions</div>
+          <div class="sub">Last 5 entries</div>
+        </div>
+        <div class="box c-orange" style="width:100%;font-size:11px;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">AccountSummaryRow</div>
+          <div class="sub">Quick-access strip</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions -->
+    <div class="page-col">
+      <div class="box c-blue" style="width:100%;align-items:center;text-align:center;">
+        <div class="tag">page</div>
+        <div class="name">Transactions</div>
+      </div>
+      <div class="connector-down" style="height:12px;"></div>
+      <div class="page-children">
+        <div class="box c-blue" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">TransactionFilters</div>
+          <div class="sub">Search · type · category · account</div>
+        </div>
+        <div class="box c-blue" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">TransactionList</div>
+          <div class="sub">Grouped by date</div>
+        </div>
+        <div class="box c-blue" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">TransactionRow</div>
+          <div class="sub">Icon · amount · edit/delete</div>
+        </div>
+        <div class="box c-blue" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">TransactionForm</div>
+          <div class="sub">Add / edit modal</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accounts -->
+    <div class="page-col">
+      <div class="box c-orange" style="width:100%;align-items:center;text-align:center;">
+        <div class="tag">page</div>
+        <div class="name">Accounts</div>
+      </div>
+      <div class="connector-down" style="height:12px;"></div>
+      <div class="page-children">
+        <div class="box c-orange" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">AccountList</div>
+          <div class="sub">Responsive grid</div>
+        </div>
+        <div class="box c-orange" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">AccountCard</div>
+          <div class="sub">Balance · income · expenses</div>
+        </div>
+        <div class="box c-orange" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">AccountForm</div>
+          <div class="sub">Add / edit modal</div>
+        </div>
+        <div class="box c-blue" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">TransactionList</div>
+          <div class="sub">Per-account drill-down</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Budget -->
+    <div class="page-col">
+      <div class="box c-green" style="width:100%;align-items:center;text-align:center;">
+        <div class="tag">page</div>
+        <div class="name">Budget</div>
+      </div>
+      <div class="connector-down" style="height:12px;"></div>
+      <div class="page-children">
+        <div class="box c-green" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">BudgetOverview</div>
+          <div class="sub">Gauge · spent / remaining</div>
+        </div>
+        <div class="box c-green" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">CategoryBudgetRow</div>
+          <div class="sub">Per-category bar + %</div>
+        </div>
+        <div class="box c-green" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">BudgetForm</div>
+          <div class="sub">Set monthly limit</div>
+        </div>
+        <div class="box c-amber" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">BudgetGauge</div>
+          <div class="sub">Radial % chart</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports -->
+    <div class="page-col">
+      <div class="box c-purple" style="width:100%;align-items:center;text-align:center;">
+        <div class="tag">page</div>
+        <div class="name">Reports</div>
+      </div>
+      <div class="connector-down" style="height:12px;"></div>
+      <div class="page-children">
+        <div class="box c-purple" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">CashFlowBar</div>
+          <div class="sub">12-month income vs expenses</div>
+        </div>
+        <div class="box c-purple" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">BalanceTrend</div>
+          <div class="sub">Area chart · cumulative</div>
+        </div>
+        <div class="box c-amber" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">SpendingDonut</div>
+          <div class="sub">Category % breakdown</div>
+        </div>
+        <div class="box c-purple" style="width:100%;padding:8px 12px;">
+          <div class="name" style="font-size:11px;">Category Table</div>
+          <div class="sub">Inline bars + amounts</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pages-row -->
+
+
+  <!-- ══════════════════════════════════════════════
+       DIVIDER — STATE LAYER
+  ══════════════════════════════════════════════ -->
+  <hr class="divider" data-label="State &amp; Hooks" style="max-width:960px;" />
+
+  <div class="section-label">State Management</div>
+
+  <div class="state-grid">
+
+    <div class="tree-col">
+      <div class="box c-violet" style="min-width:180px;">
+        <div class="tag">context</div>
+        <div class="name">BudgetContext.tsx</div>
+        <div class="sub">Provides state + dispatch</div>
+      </div>
+      <div class="connector-down" style="height:10px;"></div>
+      <div class="children">
+        <div class="box c-violet" style="min-width:130px;">
+          <div class="name" style="font-size:11px;">reducer.ts</div>
+          <div class="sub">Pure state reducer</div>
+        </div>
+        <div class="box c-violet" style="min-width:130px;">
+          <div class="name" style="font-size:11px;">actions.ts</div>
+          <div class="sub">Discriminated union</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="box c-purple" style="min-width:180px;align-self:start;">
+      <div class="tag">hook</div>
+      <div class="name">useLocalStorage.ts</div>
+      <div class="sub">Hydrate + persist<br/>Key: budgetplanner_v1</div>
+    </div>
+
+    <div class="box c-teal" style="min-width:180px;align-self:start;">
+      <div class="tag">hook</div>
+      <div class="name">useDerivedStats.ts</div>
+      <div class="sub">useMemo computed values:<br/>balances · totals · %</div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       DIVIDER — DATA MODELS
+  ══════════════════════════════════════════════ -->
+  <hr class="divider" data-label="Data Models · src/types/index.ts" style="max-width:960px;" />
+
+  <div class="section-label">TypeScript Interfaces (stored in localStorage)</div>
+
+  <div class="model-grid">
+
+    <div class="box c-orange">
+      <div class="tag">entity</div>
+      <div class="name">Account</div>
+      <div class="sub">id · name · type<br/>currency · initialBalance<br/>color · icon · isArchived</div>
+    </div>
+
+    <div class="box c-blue">
+      <div class="tag">entity</div>
+      <div class="name">Transaction</div>
+      <div class="sub">id · accountId · type<br/>category · amount · date<br/>description · recurrence</div>
+    </div>
+
+    <div class="box c-green">
+      <div class="tag">entity</div>
+      <div class="name">BudgetLimit</div>
+      <div class="sub">id · category<br/>monthlyLimit<br/>(yearly = ×12)</div>
+    </div>
+
+    <div class="box c-violet">
+      <div class="tag">derived</div>
+      <div class="name">AccountBalance</div>
+      <div class="sub">accountId<br/>computed balance<br/>(never stored)</div>
+    </div>
+
+    <div class="box c-teal">
+      <div class="tag">derived</div>
+      <div class="name">CategorySpend</div>
+      <div class="sub">category · spent<br/>limit · percentage<br/>(never stored)</div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       DIVIDER — ENUMS
+  ══════════════════════════════════════════════ -->
+  <hr class="divider" data-label="Enumerations" style="max-width:960px;" />
+
+  <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;max-width:960px;margin:0 auto;">
+
+    <!-- TransactionType -->
+    <div>
+      <div class="section-label" style="text-align:left;margin-bottom:8px;">TransactionType</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="pill"><span class="pill-dot" style="background:var(--green);"></span>income</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--red);"></span>expense</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--violet);"></span>transfer</span>
+      </div>
+    </div>
+
+    <!-- AccountType -->
+    <div>
+      <div class="section-label" style="text-align:left;margin-bottom:8px;">AccountType</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="pill"><span class="pill-dot" style="background:var(--orange);"></span>cash</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--blue);"></span>bank</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--teal);"></span>savings</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--pink);"></span>wallet</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--purple);"></span>credit</span>
+      </div>
+    </div>
+
+    <!-- Expense categories -->
+    <div>
+      <div class="section-label" style="text-align:left;margin-bottom:8px;">Expense Categories (11)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="pill">housing</span><span class="pill">food</span>
+        <span class="pill">transport</span><span class="pill">healthcare</span>
+        <span class="pill">entertainment</span><span class="pill">shopping</span>
+        <span class="pill">education</span><span class="pill">utilities</span>
+        <span class="pill">subscriptions</span><span class="pill">personal</span>
+        <span class="pill">other</span>
+      </div>
+    </div>
+
+    <!-- Income categories -->
+    <div>
+      <div class="section-label" style="text-align:left;margin-bottom:8px;">Income Categories (5)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="pill"><span class="pill-dot" style="background:var(--green);"></span>salary</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--green);"></span>freelance</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--green);"></span>investment</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--green);"></span>gift</span>
+        <span class="pill"><span class="pill-dot" style="background:var(--green);"></span>other income</span>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       DIVIDER — UTILITIES
+  ══════════════════════════════════════════════ -->
+  <hr class="divider" data-label="Utilities" style="max-width:960px;" />
+
+  <div class="section-label">Utility Modules</div>
+
+  <div class="util-grid">
+
+    <div class="box c-amber">
+      <div class="tag">utils</div>
+      <div class="name">formatters.ts</div>
+      <div class="sub">formatCurrency()<br/>formatDate()<br/>formatRelativeDate()<br/>formatPercentage()</div>
+    </div>
+
+    <div class="box c-amber">
+      <div class="tag">utils</div>
+      <div class="name">calculations.ts</div>
+      <div class="sub">computeAccountBalance()<br/>getMonthlyIncome/Expenses()<br/>getCategorySpend()<br/>buildMonthlySummaries()</div>
+    </div>
+
+    <div class="box c-amber">
+      <div class="tag">utils</div>
+      <div class="name">chartHelpers.ts</div>
+      <div class="sub">toCashFlowBarData()<br/>toDonutData()<br/>toBalanceTrendData()</div>
+    </div>
+
+    <div class="box c-pink">
+      <div class="tag">component</div>
+      <div class="name">DynamicIcon.tsx</div>
+      <div class="sub">Renders any Lucide icon<br/>by string name at runtime</div>
+    </div>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       DIVIDER — UI PRIMITIVES
+  ══════════════════════════════════════════════ -->
+  <hr class="divider" data-label="UI Primitives · src/components/ui/" style="max-width:960px;" />
+
+  <div class="section-label">Reusable UI Atoms</div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:900px;margin:0 auto;">
+    <div class="box c-teal" style="min-width:110px;">
+      <div class="name" style="font-size:12px;">Button.tsx</div>
+      <div class="sub">primary / secondary<br/>ghost / danger</div>
+    </div>
+    <div class="box c-teal" style="min-width:110px;">
+      <div class="name" style="font-size:12px;">Card.tsx</div>
+      <div class="sub">surface wrapper<br/>optional hover</div>
+    </div>
+    <div class="box c-teal" style="min-width:110px;">
+      <div class="name" style="font-size:12px;">Modal.tsx</div>
+      <div class="sub">backdrop blur<br/>ESC to close</div>
+    </div>
+    <div class="box c-teal" style="min-width:110px;">
+      <div class="name" style="font-size:12px;">Input.tsx</div>
+      <div class="sub">label · left icon<br/>error message</div>
+    </div>
+    <div class="box c-teal" style="min-width:110px;">
+      <div class="name" style="font-size:12px;">Select.tsx</div>
+      <div class="sub">Styled dropdown<br/>dark mode</div>
+    </div>
+    <div class="box c-teal" style="min-width:110px;">
+      <div class="name" style="font-size:12px;">ProgressBar.tsx</div>
+      <div class="sub">green → amber → red<br/>at 70% / 90%</div>
+    </div>
+    <div class="box c-teal" style="min-width:110px;">
+      <div class="name" style="font-size:12px;">Badge.tsx</div>
+      <div class="sub">Color pill<br/>custom bg/text</div>
+    </div>
+    <div class="box c-teal" style="min-width:110px;">
+      <div class="name" style="font-size:12px;">EmptyState.tsx</div>
+      <div class="sub">Icon · title<br/>description · CTA</div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       DATA FLOW
+  ══════════════════════════════════════════════ -->
+  <hr class="divider" data-label="Data Flow" style="max-width:960px;" />
+
+  <div style="max-width:700px;margin:0 auto;">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:0;align-items:center;">
+
+      <div class="box c-purple" style="text-align:center;align-items:center;">
+        <div class="tag">persist</div>
+        <div class="name">localStorage</div>
+        <div class="sub">budgetplanner_v1<br/>JSON blob</div>
+      </div>
+
+      <div style="padding:0 12px;color:var(--t3);font-size:20px;text-align:center;">⇄</div>
+
+      <div class="box c-violet" style="text-align:center;align-items:center;">
+        <div class="tag">context</div>
+        <div class="name">BudgetContext</div>
+        <div class="sub">useReducer<br/>state + dispatch</div>
+      </div>
+
+      <div style="padding:0 12px;color:var(--t3);font-size:20px;text-align:center;">→</div>
+
+      <div class="box c-teal" style="text-align:center;align-items:center;">
+        <div class="tag">hook</div>
+        <div class="name">useDerivedStats</div>
+        <div class="sub">useMemo<br/>computed aggregates</div>
+      </div>
+
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-top:10px;">
+      <div style="width:2px;height:20px;background:var(--border);"></div>
+    </div>
+
+    <div style="display:flex;justify-content:center;">
+      <div class="box c-blue" style="text-align:center;align-items:center;min-width:200px;">
+        <div class="name">Page Components</div>
+        <div class="sub">call useBudget() + useDerivedStats()<br/>dispatch actions on user events</div>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;">
+      <div class="section-label" style="text-align:left;margin-bottom:12px;">Key Architectural Rules</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--t2);">
+          <span style="color:var(--green);font-weight:700;">✓</span>
+          <span>Derived values (account balance, category totals, charts) are always <em>computed</em> from raw transactions — never stored</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--t2);">
+          <span style="color:var(--green);font-weight:700;">✓</span>
+          <span>Transfers are a single Transaction with both <code style="background:var(--elevated);padding:1px 5px;border-radius:4px;font-size:11px;">accountId</code> and <code style="background:var(--elevated);padding:1px 5px;border-radius:4px;font-size:11px;">toAccountId</code> set</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--t2);">
+          <span style="color:var(--green);font-weight:700;">✓</span>
+          <span>Dark-only design — no <code style="background:var(--elevated);padding:1px 5px;border-radius:4px;font-size:11px;">dark:</code> variants needed; custom Tailwind palette (<code style="background:var(--elevated);padding:1px 5px;border-radius:4px;font-size:11px;">bg-surface</code>, <code style="background:var(--elevated);padding:1px 5px;border-radius:4px;font-size:11px;">accent-primary</code>…)</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--t2);">
+          <span style="color:var(--green);font-weight:700;">✓</span>
+          <span>No backend, no routing library — 5-page <code style="background:var(--elevated);padding:1px 5px;border-radius:4px;font-size:11px;">useState</code> switcher in App.tsx</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;margin-top:60px;color:var(--t3);font-size:11px;">
+    48 source files · src/ · open <strong style="color:var(--t2);">overview.html</strong> in Live Server at any time
+  </div>
+
+</body>
+</html>

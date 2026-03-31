@@ -69,11 +69,15 @@ export function TransactionForm({
     setErrors({});
   }, [isOpen, initial, defaultAccountId, accounts]);
 
-  // Update category when type changes
+  // Update category and auto-select toAccount when type changes
   useEffect(() => {
     if (type === 'income') setCategory('salary');
     else if (type === 'expense') setCategory('food');
-  }, [type]);
+    else if (type === 'transfer') {
+      const firstOther = accounts.find((a) => a.id !== accountId);
+      setToAccountId(firstOther?.id ?? '');
+    }
+  }, [type, accountId, accounts]);
 
   const validate = () => {
     const errs: Record<string, string> = {};

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, ArrowLeftRight } from 'lucide-react';
 import type { Transaction, Account } from '@/types';
 import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS } from '@/constants';
 import { formatCurrency, formatRelativeDate } from '@/utils/formatters';
@@ -21,28 +21,28 @@ export function TransactionRow({
 }: TransactionRowProps) {
   const isIncome = transaction.type === 'income';
   const isTransfer = transaction.type === 'transfer';
-  const color = CATEGORY_COLORS[transaction.category];
+  const color = isTransfer ? '#6C63FF' : CATEGORY_COLORS[transaction.category];
   const icon = CATEGORY_ICONS[transaction.category];
 
   return (
     <div className="flex items-center gap-4 px-4 py-3 hover:bg-elevated rounded-xl transition-colors group">
-      {/* Category icon */}
+      {/* Icon */}
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
         style={{ backgroundColor: `${color}20` }}
       >
-        <DynamicIcon name={icon} size={18} style={{ color }} />
+        {isTransfer
+          ? <ArrowLeftRight size={18} style={{ color }} />
+          : <DynamicIcon name={icon} size={18} style={{ color }} />
+        }
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-text-primary truncate">
-            {transaction.description || CATEGORY_LABELS[transaction.category]}
+            {transaction.description || (isTransfer ? 'Transfer' : CATEGORY_LABELS[transaction.category])}
           </p>
-          {isTransfer && (
-            <Badge color="#6C63FF">Transfer</Badge>
-          )}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-xs text-text-muted">
@@ -77,7 +77,9 @@ export function TransactionRow({
           {isIncome ? '+' : isTransfer ? '' : '-'}
           {formatCurrency(transaction.amount, account?.currency ?? 'EUR')}
         </p>
-        <p className="text-xs text-text-muted">{CATEGORY_LABELS[transaction.category]}</p>
+        {!isTransfer && (
+          <p className="text-xs text-text-muted">{CATEGORY_LABELS[transaction.category]}</p>
+        )}
       </div>
 
       {/* Actions */}
