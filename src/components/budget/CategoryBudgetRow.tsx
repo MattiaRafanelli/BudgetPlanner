@@ -1,38 +1,33 @@
-import React from 'react';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import type { CategorySpend } from '@/types';
-import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS } from '@/constants';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
 import { DynamicIcon } from '@/components/DynamicIcon';
+import { useCategories } from '@/hooks/useCategories';
 
 interface CategoryBudgetRowProps {
   item: CategorySpend;
   currency?: string;
-  onSetLimit: (category: CategorySpend['category']) => void;
-  onRemoveLimit: (category: CategorySpend['category']) => void;
+  onSetLimit: (category: string) => void;
+  onRemoveLimit: (category: string) => void;
 }
 
 function getBarColor(pct: number): string {
-  if (pct >= 100) return 'bg-accent-red';
   if (pct >= 90) return 'bg-accent-red';
   if (pct >= 70) return 'bg-accent-amber';
   return 'bg-accent-green';
 }
 
-export function CategoryBudgetRow({
-  item,
-  currency = 'EUR',
-  onSetLimit,
-  onRemoveLimit,
-}: CategoryBudgetRowProps) {
-  const color = CATEGORY_COLORS[item.category];
-  const icon = CATEGORY_ICONS[item.category];
-  const pct = item.percentage ?? 0;
+export function CategoryBudgetRow({ item, currency = 'EUR', onSetLimit, onRemoveLimit }: CategoryBudgetRowProps) {
+  const { getCategoryName, getCategoryIcon, getCategoryColor } = useCategories();
+
+  const color    = getCategoryColor(item.category);
+  const icon     = getCategoryIcon(item.category);
+  const name     = getCategoryName(item.category);
+  const pct      = item.percentage ?? 0;
   const barColor = item.percentage !== null ? getBarColor(pct) : 'bg-accent-primary';
 
   return (
     <div className="flex items-center gap-4 px-4 py-3 hover:bg-elevated rounded-xl transition-colors group">
-      {/* Icon */}
       <div
         className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
         style={{ backgroundColor: `${color}20` }}
@@ -40,12 +35,9 @@ export function CategoryBudgetRow({
         <DynamicIcon name={icon} size={16} style={{ color }} />
       </div>
 
-      {/* Info + bar */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-sm font-medium text-text-primary">
-            {CATEGORY_LABELS[item.category]}
-          </span>
+          <span className="text-sm font-medium text-text-primary">{name}</span>
           <div className="flex items-center gap-2">
             <span className="text-xs tabular-nums text-text-primary font-semibold">
               {formatCurrency(item.spent, currency, true)}
@@ -56,31 +48,22 @@ export function CategoryBudgetRow({
               </span>
             )}
             {item.percentage !== null && (
-              <span
-                className={`text-xs tabular-nums font-medium ${
-                  pct >= 90 ? 'text-accent-red' : pct >= 70 ? 'text-accent-amber' : 'text-accent-green'
-                }`}
-              >
+              <span className={`text-xs tabular-nums font-medium ${
+                pct >= 90 ? 'text-accent-red' : pct >= 70 ? 'text-accent-amber' : 'text-accent-green'
+              }`}>
                 {formatPercentage(pct)}
               </span>
             )}
           </div>
         </div>
-        {item.limit !== null ? (
-          <div className="h-1.5 bg-border rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-              style={{ width: `${Math.min(pct, 100)}%` }}
-            />
-          </div>
-        ) : (
-          <div className="h-1.5 bg-border rounded-full overflow-hidden">
-            <div className="h-full w-0 rounded-full bg-accent-primary" />
-          </div>
-        )}
+        <div className="h-1.5 bg-border rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+            style={{ width: `${Math.min(pct, 100)}%` }}
+          />
+        </div>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
         <button
           onClick={() => onSetLimit(item.category)}

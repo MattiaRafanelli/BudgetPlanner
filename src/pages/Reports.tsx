@@ -1,4 +1,3 @@
-import React from 'react';
 import { TopBar } from '@/components/layout/TopBar';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { CashFlowBar } from '@/components/charts/CashFlowBar';
@@ -26,7 +25,7 @@ export function Reports() {
       <PageContainer>
         <div className="space-y-6">
           {/* Summary strip */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Card className="p-4 text-center">
               <p className="text-xs text-text-muted mb-1">This Month Income</p>
               <p className="text-xl font-bold tabular-nums text-accent-green">

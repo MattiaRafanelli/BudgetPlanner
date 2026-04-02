@@ -1,10 +1,8 @@
-import React from 'react';
 import { Pencil, Trash2, ArrowLeftRight } from 'lucide-react';
 import type { Transaction, Account } from '@/types';
-import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS } from '@/constants';
 import { formatCurrency, formatRelativeDate } from '@/utils/formatters';
 import { DynamicIcon } from '@/components/DynamicIcon';
-import { Badge } from '@/components/ui/Badge';
+import { useCategories } from '@/hooks/useCategories';
 
 interface TransactionRowProps {
   transaction: Transaction;
@@ -13,16 +11,15 @@ interface TransactionRowProps {
   onDelete: (id: string) => void;
 }
 
-export function TransactionRow({
-  transaction,
-  account,
-  onEdit,
-  onDelete,
-}: TransactionRowProps) {
-  const isIncome = transaction.type === 'income';
+export function TransactionRow({ transaction, account, onEdit, onDelete }: TransactionRowProps) {
+  const { getCategoryName, getCategoryIcon, getCategoryColor } = useCategories();
+
+  const isIncome   = transaction.type === 'income';
   const isTransfer = transaction.type === 'transfer';
-  const color = isTransfer ? '#6C63FF' : CATEGORY_COLORS[transaction.category];
-  const icon = CATEGORY_ICONS[transaction.category];
+
+  const color = isTransfer ? '#6C63FF' : getCategoryColor(transaction.category);
+  const icon  = getCategoryIcon(transaction.category);
+  const label = getCategoryName(transaction.category);
 
   return (
     <div className="flex items-center gap-4 px-4 py-3 hover:bg-elevated rounded-xl transition-colors group">
@@ -39,23 +36,16 @@ export function TransactionRow({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-text-primary truncate">
-            {transaction.description || (isTransfer ? 'Transfer' : CATEGORY_LABELS[transaction.category])}
-          </p>
-        </div>
+        <p className="text-sm font-medium text-text-primary truncate">
+          {transaction.description || (isTransfer ? 'Transfer' : label)}
+        </p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-text-muted">
-            {formatRelativeDate(transaction.date)}
-          </span>
+          <span className="text-xs text-text-muted">{formatRelativeDate(transaction.date)}</span>
           {account && (
             <>
               <span className="text-text-muted text-xs">·</span>
               <span className="flex items-center gap-1 text-xs text-text-muted">
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: account.color }}
-                />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: account.color }} />
                 {account.name}
               </span>
             </>
@@ -65,20 +55,14 @@ export function TransactionRow({
 
       {/* Amount */}
       <div className="text-right">
-        <p
-          className={`text-sm font-semibold tabular-nums ${
-            isIncome
-              ? 'text-accent-green'
-              : isTransfer
-              ? 'text-text-secondary'
-              : 'text-accent-red'
-          }`}
-        >
+        <p className={`text-sm font-semibold tabular-nums ${
+          isIncome ? 'text-accent-green' : isTransfer ? 'text-text-secondary' : 'text-accent-red'
+        }`}>
           {isIncome ? '+' : isTransfer ? '' : '-'}
           {formatCurrency(transaction.amount, account?.currency ?? 'EUR')}
         </p>
         {!isTransfer && (
-          <p className="text-xs text-text-muted">{CATEGORY_LABELS[transaction.category]}</p>
+          <p className="text-xs text-text-muted">{label}</p>
         )}
       </div>
 

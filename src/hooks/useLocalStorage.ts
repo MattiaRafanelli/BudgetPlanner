@@ -9,6 +9,7 @@ interface StoredData {
   accounts: AppState['accounts'];
   transactions: AppState['transactions'];
   budgetLimits: AppState['budgetLimits'];
+  customCategories: AppState['customCategories'];
   activePeriod: AppState['activePeriod'];
 }
 
@@ -22,6 +23,7 @@ export function loadFromStorage(): Partial<AppState> | null {
       accounts: data.accounts ?? [],
       transactions: data.transactions ?? [],
       budgetLimits: data.budgetLimits ?? [],
+      customCategories: data.customCategories ?? [],
       activePeriod: data.activePeriod,
     };
   } catch {
@@ -34,7 +36,6 @@ export function useLocalStorage(
   dispatch: React.Dispatch<AppAction>,
   initialized: React.MutableRefObject<boolean>
 ) {
-  // Hydrate on mount
   useEffect(() => {
     const saved = loadFromStorage();
     if (saved) {
@@ -44,7 +45,6 @@ export function useLocalStorage(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist on state change
   useEffect(() => {
     if (!initialized.current) return;
     const data: StoredData = {
@@ -52,8 +52,9 @@ export function useLocalStorage(
       accounts: state.accounts,
       transactions: state.transactions,
       budgetLimits: state.budgetLimits,
+      customCategories: state.customCategories,
       activePeriod: state.activePeriod,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [state.accounts, state.transactions, state.budgetLimits, state.activePeriod]);
+  }, [state.accounts, state.transactions, state.budgetLimits, state.customCategories, state.activePeriod]);
 }

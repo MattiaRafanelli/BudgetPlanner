@@ -13,6 +13,12 @@
     />
   </head>
   <body>
+    <script>
+      // Redirect from VS Code Live Server to the Vite dev server
+      if (location.port === '5500' || location.port === '5501') {
+        location.replace('http://localhost:5173/');
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

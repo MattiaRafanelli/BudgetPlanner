@@ -4,23 +4,25 @@ export type AccountType = 'cash' | 'bank' | 'savings' | 'wallet' | 'credit';
 
 export type RecurrenceInterval = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
-export type TransactionCategory =
-  | 'housing'
-  | 'food'
-  | 'transport'
-  | 'healthcare'
-  | 'entertainment'
-  | 'shopping'
-  | 'education'
-  | 'utilities'
-  | 'subscriptions'
-  | 'personal'
-  | 'other_expense'
-  | 'salary'
-  | 'freelance'
-  | 'investment'
-  | 'gift'
-  | 'other_income';
+// Built-in category IDs (kept for backward-compat with stored data)
+export type BuiltInCategory =
+  | 'housing' | 'food' | 'transport' | 'healthcare'
+  | 'entertainment' | 'shopping' | 'education'
+  | 'utilities' | 'subscriptions' | 'personal' | 'other_expense'
+  | 'salary' | 'freelance' | 'investment' | 'gift' | 'other_income';
+
+// All category IDs are strings (built-in or custom)
+export type TransactionCategory = string;
+
+export interface Category {
+  id: string;
+  name: string;
+  icon: string;        // Lucide icon name
+  color: string;       // hex
+  type: 'income' | 'expense';
+  parentId: string | null;  // null = top-level, string = subcategory of that id
+  isBuiltIn: boolean;
+}
 
 export interface Account {
   id: string;
@@ -39,7 +41,7 @@ export interface Transaction {
   accountId: string;
   toAccountId?: string;
   type: TransactionType;
-  category: TransactionCategory;
+  category: string;   // category id (built-in or custom)
   amount: number;
   description: string;
   date: string;
@@ -51,7 +53,7 @@ export interface Transaction {
 
 export interface BudgetLimit {
   id: string;
-  category: TransactionCategory;
+  category: string;   // category id (built-in or custom)
   monthlyLimit: number;
 }
 
@@ -66,7 +68,7 @@ export interface AccountBalance {
 }
 
 export interface CategorySpend {
-  category: TransactionCategory;
+  category: string;
   spent: number;
   limit: number | null;
   percentage: number | null;
@@ -84,6 +86,7 @@ export interface AppState {
   accounts: Account[];
   transactions: Transaction[];
   budgetLimits: BudgetLimit[];
+  customCategories: Category[];
   activePeriod: BudgetPeriod;
   selectedAccountId: string | null;
   ui: {

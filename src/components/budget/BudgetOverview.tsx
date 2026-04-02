@@ -1,5 +1,4 @@
-import React from 'react';
-import { formatCurrency, formatPercentage } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatters';
 import { BudgetGauge } from '@/components/charts/BudgetGauge';
 import { Card } from '@/components/ui/Card';
 
@@ -24,7 +23,7 @@ export function BudgetOverview({
       <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-4">
         Monthly Budget
       </h3>
-      <div className="flex items-center gap-8">
+      <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
         <BudgetGauge
           percentage={percentage}
           spent={spent}

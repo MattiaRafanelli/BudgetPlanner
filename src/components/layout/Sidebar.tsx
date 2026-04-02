@@ -5,13 +5,14 @@ import {
   Wallet,
   PieChart,
   BarChart3,
+  Tag,
   ChevronLeft,
   ChevronRight,
   TrendingUp,
 } from 'lucide-react';
 import { useBudget } from '@/hooks/useBudget';
 
-type Page = 'dashboard' | 'transactions' | 'accounts' | 'budget' | 'reports';
+type Page = 'dashboard' | 'transactions' | 'accounts' | 'budget' | 'reports' | 'categories';
 
 interface SidebarProps {
   currentPage: Page;
@@ -19,11 +20,12 @@ interface SidebarProps {
 }
 
 const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+  { id: 'dashboard',    label: 'Dashboard',    icon: <LayoutDashboard size={18} /> },
   { id: 'transactions', label: 'Transactions', icon: <ArrowLeftRight size={18} /> },
-  { id: 'accounts', label: 'Accounts', icon: <Wallet size={18} /> },
-  { id: 'budget', label: 'Budget', icon: <PieChart size={18} /> },
-  { id: 'reports', label: 'Reports', icon: <BarChart3 size={18} /> },
+  { id: 'accounts',     label: 'Accounts',     icon: <Wallet size={18} /> },
+  { id: 'budget',       label: 'Budget',       icon: <PieChart size={18} /> },
+  { id: 'reports',      label: 'Reports',      icon: <BarChart3 size={18} /> },
+  { id: 'categories',   label: 'Categories',   icon: <Tag size={18} /> },
 ];
 
 export function Sidebar({ currentPage, onNavigate }: SidebarProps) {

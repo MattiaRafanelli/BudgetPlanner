@@ -5,6 +5,7 @@ export const initialState: AppState = {
   accounts: [],
   transactions: [],
   budgetLimits: [],
+  customCategories: [],
   activePeriod: {
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
@@ -78,6 +79,32 @@ export function reducer(state: AppState, action: AppAction): AppState {
         ...state,
         budgetLimits: state.budgetLimits.filter(
           (b) => b.category !== action.payload.category
+        ),
+      };
+
+    case 'ADD_CATEGORY':
+      return {
+        ...state,
+        customCategories: [...state.customCategories, action.payload],
+      };
+
+    case 'UPDATE_CATEGORY':
+      return {
+        ...state,
+        customCategories: state.customCategories.map((c) =>
+          c.id === action.payload.id ? action.payload : c
+        ),
+      };
+
+    case 'DELETE_CATEGORY':
+      return {
+        ...state,
+        // Also remove subcategories of this category
+        customCategories: state.customCategories.filter(
+          (c) => c.id !== action.payload.id && c.parentId !== action.payload.id
+        ),
+        budgetLimits: state.budgetLimits.filter(
+          (b) => b.category !== action.payload.id
         ),
       };
 
