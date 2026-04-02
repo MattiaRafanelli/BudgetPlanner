@@ -57,4 +57,5 @@ jobs:
         with:
           app-name: 'BudgetPlanner'
           slot-name: 'Production'
-          package: ./dist   
+          package: .
+          
