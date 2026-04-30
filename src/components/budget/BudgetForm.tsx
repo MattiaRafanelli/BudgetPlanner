@@ -93,7 +93,7 @@ export function BudgetForm({ isOpen, onClose, onSave, initial }: BudgetFormProps
 
         {monthlyLimit && !isNaN(Number(monthlyLimit)) && (
           <p className="text-xs text-text-muted">
-            Yearly: ×12 = {(Number(monthlyLimit) * 12).toLocaleString('en-US', { style: 'currency', currency: 'EUR' })}
+            Yearly: ×12 = {(Number(monthlyLimit) * 12).toLocaleString('en-US', { style: 'currency', currency: 'CHF' })}
           </p>
         )}
 

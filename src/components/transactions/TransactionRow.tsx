@@ -59,7 +59,7 @@ export function TransactionRow({ transaction, account, onEdit, onDelete }: Trans
           isIncome ? 'text-accent-green' : isTransfer ? 'text-text-secondary' : 'text-accent-red'
         }`}>
           {isIncome ? '+' : isTransfer ? '' : '-'}
-          {formatCurrency(transaction.amount, account?.currency ?? 'EUR')}
+          {formatCurrency(transaction.amount, account?.currency ?? 'CHF')}
         </p>
         {!isTransfer && (
           <p className="text-xs text-text-muted">{label}</p>

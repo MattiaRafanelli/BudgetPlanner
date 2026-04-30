@@ -17,7 +17,7 @@ function getBarColor(pct: number): string {
   return 'bg-accent-green';
 }
 
-export function CategoryBudgetRow({ item, currency = 'EUR', onSetLimit, onRemoveLimit }: CategoryBudgetRowProps) {
+export function CategoryBudgetRow({ item, currency = 'CHF', onSetLimit, onRemoveLimit }: CategoryBudgetRowProps) {
   const { getCategoryName, getCategoryIcon, getCategoryColor } = useCategories();
 
   const color    = getCategoryColor(item.category);

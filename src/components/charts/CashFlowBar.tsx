@@ -47,7 +47,7 @@ const CustomTooltip = ({
   );
 };
 
-export function CashFlowBar({ data, currency = 'EUR' }: CashFlowBarProps) {
+export function CashFlowBar({ data, currency = 'CHF' }: CashFlowBarProps) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} barGap={4} barCategoryGap="30%">

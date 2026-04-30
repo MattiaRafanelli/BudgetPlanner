@@ -1,6 +1,6 @@
 export function formatCurrency(
   amount: number,
-  currency = 'EUR',
+  currency = 'CHF',
   compact = false
 ): string {
   return new Intl.NumberFormat('en-US', {

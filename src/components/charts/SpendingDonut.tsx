@@ -34,7 +34,7 @@ const CustomTooltip = ({
 export function SpendingDonut({
   data,
   total,
-  currency = 'EUR',
+  currency = 'CHF',
   compact = false,
 }: SpendingDonutProps) {
   if (data.length === 0) {

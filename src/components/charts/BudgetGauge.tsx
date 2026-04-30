@@ -16,7 +16,7 @@ function getColor(pct: number): string {
   return '#22C55E';
 }
 
-export function BudgetGauge({ percentage, spent, total, currency = 'EUR' }: BudgetGaugeProps) {
+export function BudgetGauge({ percentage, spent, total, currency = 'CHF' }: BudgetGaugeProps) {
   const clamped = Math.min(percentage, 100);
   const color = getColor(percentage);
 

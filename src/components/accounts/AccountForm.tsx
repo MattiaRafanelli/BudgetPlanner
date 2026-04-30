@@ -31,7 +31,7 @@ const currencyOptions = [
 export function AccountForm({ isOpen, onClose, onSave, initial }: AccountFormProps) {
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('bank');
-  const [currency, setCurrency] = useState('EUR');
+  const [currency, setCurrency] = useState('CHF');
   const [initialBalance, setInitialBalance] = useState('0');
   const [color, setColor] = useState(ACCOUNT_COLOR_PRESETS[0]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,7 +46,7 @@ export function AccountForm({ isOpen, onClose, onSave, initial }: AccountFormPro
     } else {
       setName('');
       setType('bank');
-      setCurrency('EUR');
+      setCurrency('CHF');
       setInitialBalance('0');
       setColor(ACCOUNT_COLOR_PRESETS[0]);
     }

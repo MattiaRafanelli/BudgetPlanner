@@ -41,7 +41,7 @@ const CustomTooltip = ({
   );
 };
 
-export function BalanceTrend({ data, currency = 'EUR' }: BalanceTrendProps) {
+export function BalanceTrend({ data, currency = 'CHF' }: BalanceTrendProps) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <AreaChart data={data}>

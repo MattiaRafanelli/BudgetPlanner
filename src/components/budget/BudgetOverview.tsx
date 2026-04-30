@@ -13,7 +13,7 @@ export function BudgetOverview({
   spent,
   totalBudget,
   income,
-  currency = 'EUR',
+  currency = 'CHF',
 }: BudgetOverviewProps) {
   const percentage = totalBudget > 0 ? (spent / totalBudget) * 100 : 0;
   const remaining = totalBudget - spent;
