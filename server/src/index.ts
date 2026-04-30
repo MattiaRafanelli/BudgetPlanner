@@ -11,6 +11,7 @@ import accountsRouter from './routes/accounts';
 import budgetsRouter from './routes/budgets';
 import { errorHandler } from './middleware/errorHandler';
 import pool from './db'; // Import the DB pool (which will now have env vars)
+import { runMigrations } from './db/migrations';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 8081;
@@ -88,8 +89,13 @@ app.use(errorHandler);
 // Server Startup
 // ============================================================================
 
-const server = app.listen(PORT, () => {
-  console.log(`
+async function startServer() {
+  try {
+    // Run migrations first
+    await runMigrations();
+
+    const server = app.listen(PORT, () => {
+      console.log(`
 ╔════════════════════════════════════════╗
 ║      🚀 BudgetPlanner Server Ready     ║
 ╚════════════════════════════════════════╝
@@ -98,32 +104,36 @@ const server = app.listen(PORT, () => {
   API:      http://localhost:${PORT}/api
   Health:   http://localhost:${PORT}/api/health
   Status:   http://localhost:${PORT}/api/status
-  
+
   Environment: ${process.env.NODE_ENV || 'development'}
   CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}
   Database:    ${process.env.DB_HOST || 'undefined'}
-  
+
   Ready to accept requests! 📝
 `);
-});
+    });
 
-// ============================================================================
-// Graceful Shutdown
-// ============================================================================
+    // Graceful shutdown
+    process.on('SIGTERM', async () => {
+      console.log('🛑 SIGTERM received, shutting down gracefully...');
+      server.close(async () => {
+        console.log('✅ Server closed');
+        try {
+          await pool.end();
+          console.log('✅ Database pool closed');
+          process.exit(0);
+        } catch (error) {
+          console.error('❌ Error closing database:', error);
+          process.exit(1);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
 
-process.on('SIGTERM', async () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully...');
-  server.close(async () => {
-    console.log('✅ Server closed');
-    try {
-      await pool.end();
-      console.log('✅ Database pool closed');
-      process.exit(0);
-    } catch (error) {
-      console.error('❌ Error closing database:', error);
-      process.exit(1);
-    }
-  });
-});
+startServer();
 
 export default app;
