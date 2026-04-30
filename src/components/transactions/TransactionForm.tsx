@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useCategories } from '@/hooks/useCategories';
+import { getPaydayString } from '@/utils/payday';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -66,11 +67,19 @@ export function TransactionForm({
   }, [isOpen, initial, defaultAccountId, accounts]);
 
   useEffect(() => {
-    if (type === 'income')   setCategory('salary');
-    else if (type === 'expense') setCategory('food');
+    if (type === 'income') {
+      setCategory('salary');
+      // Set date to payday (1st of month, or Friday if weekend)
+      setDate(getPaydayString());
+    }
+    else if (type === 'expense') {
+      setCategory('food');
+      setDate(today());
+    }
     else if (type === 'transfer') {
       const firstOther = accounts.find((a) => a.id !== accountId);
       setToAccountId(firstOther?.id ?? '');
+      setDate(today());
     }
   }, [type, accountId, accounts]);
 
