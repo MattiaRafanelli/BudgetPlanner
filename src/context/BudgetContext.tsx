@@ -4,6 +4,7 @@ import type { AppAction } from './actions';
 import { reducer, initialState } from './reducer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useLoadApiData } from '@/hooks/useLoadApiData';
+import { useSyncData } from '@/hooks/useSyncData';
 
 interface BudgetContextValue {
   state: AppState;
@@ -18,6 +19,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
 
   useLocalStorage(state, dispatch, initialized);
   useLoadApiData(dispatch, initialized);
+  useSyncData(dispatch, initialized);
 
   return (
     <BudgetContext.Provider value={{ state, dispatch }}>
