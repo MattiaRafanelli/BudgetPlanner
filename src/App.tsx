@@ -7,8 +7,9 @@ import { Accounts } from '@/pages/Accounts';
 import { Budget } from '@/pages/Budget';
 import { Reports } from '@/pages/Reports';
 import { Categories } from '@/pages/Categories';
+import { Calendar } from '@/pages/Calendar';
 
-type Page = 'dashboard' | 'transactions' | 'accounts' | 'budget' | 'reports' | 'categories';
+type Page = 'dashboard' | 'transactions' | 'accounts' | 'budget' | 'reports' | 'categories' | 'calendar';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -21,6 +22,7 @@ function AppContent() {
       case 'budget':       return <Budget />;
       case 'reports':      return <Reports />;
       case 'categories':   return <Categories />;
+      case 'calendar':     return <Calendar />;
     }
   };
 

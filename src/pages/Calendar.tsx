@@ -1,0 +1,66 @@
+import React, { useState } from 'react';
+import { useBudget } from '@/hooks/useBudget';
+import { TopBar } from '@/components/layout/TopBar';
+import { PageContainer } from '@/components/layout/PageContainer';
+import BudgetCalendar from '@/components/calendar/CalendarView';
+import { TransactionForm } from '@/components/transactions/TransactionForm';
+
+export const Calendar = () => {
+  const { state, dispatch } = useBudget();
+  const { accounts, transactions } = state;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const handleSelectDay = (date: Date) => {
+    setSelectedDate(date);
+    setSelectedTransaction(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveTransaction = (transaction: any) => {
+    if (selectedTransaction) {
+      dispatch({
+        type: 'UPDATE_TRANSACTION',
+        payload: transaction,
+      });
+    } else {
+      dispatch({
+        type: 'ADD_TRANSACTION',
+        payload: transaction,
+      });
+    }
+  };
+
+  return (
+    <>
+      <TopBar
+        title="Calendar"
+        onAddTransaction={() => {
+          setSelectedTransaction(null);
+          setSelectedDate(null);
+          setIsModalOpen(true);
+        }}
+      />
+      <PageContainer>
+        <div className="space-y-6">
+          <BudgetCalendar
+            transactions={transactions}
+            currency="CHF"
+            onSelectDay={handleSelectDay}
+          />
+        </div>
+      </PageContainer>
+      <TransactionForm
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveTransaction}
+        accounts={accounts}
+        initial={selectedTransaction}
+        defaultAccountId={accounts[0]?.id}
+      />
+    </>
+  );
+};
+
+export default Calendar;

@@ -5,9 +5,10 @@ import {
   PieChart,
   BarChart3,
   Tag,
+  Calendar,
 } from 'lucide-react';
 
-type Page = 'dashboard' | 'transactions' | 'accounts' | 'budget' | 'reports' | 'categories';
+type Page = 'dashboard' | 'transactions' | 'accounts' | 'budget' | 'reports' | 'categories' | 'calendar';
 
 interface BottomNavProps {
   currentPage: Page;
@@ -18,6 +19,7 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   { id: 'dashboard',    label: 'Home',     icon: <LayoutDashboard size={20} /> },
   { id: 'transactions', label: 'Txns',     icon: <ArrowLeftRight size={20} /> },
   { id: 'accounts',     label: 'Accounts', icon: <Wallet size={20} /> },
+  { id: 'calendar',     label: 'Calendar', icon: <Calendar size={20} /> },
   { id: 'budget',       label: 'Budget',   icon: <PieChart size={20} /> },
   { id: 'reports',      label: 'Reports',  icon: <BarChart3 size={20} /> },
   { id: 'categories',   label: 'Tags',     icon: <Tag size={20} /> },

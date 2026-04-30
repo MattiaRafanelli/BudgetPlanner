@@ -9,10 +9,11 @@ import {
   ChevronLeft,
   ChevronRight,
   TrendingUp,
+  Calendar,
 } from 'lucide-react';
 import { useBudget } from '@/hooks/useBudget';
 
-type Page = 'dashboard' | 'transactions' | 'accounts' | 'budget' | 'reports' | 'categories';
+type Page = 'dashboard' | 'transactions' | 'accounts' | 'budget' | 'reports' | 'categories' | 'calendar';
 
 interface SidebarProps {
   currentPage: Page;
@@ -23,6 +24,7 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   { id: 'dashboard',    label: 'Dashboard',    icon: <LayoutDashboard size={18} /> },
   { id: 'transactions', label: 'Transactions', icon: <ArrowLeftRight size={18} /> },
   { id: 'accounts',     label: 'Accounts',     icon: <Wallet size={18} /> },
+  { id: 'calendar',     label: 'Calendar',     icon: <Calendar size={18} /> },
   { id: 'budget',       label: 'Budget',       icon: <PieChart size={18} /> },
   { id: 'reports',      label: 'Reports',      icon: <BarChart3 size={18} /> },
   { id: 'categories',   label: 'Categories',   icon: <Tag size={18} /> },
