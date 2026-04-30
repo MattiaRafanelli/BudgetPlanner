@@ -84,7 +84,7 @@ export function TransactionForm({
     return errs;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
@@ -103,6 +103,24 @@ export function TransactionForm({
       createdAt:   initial?.createdAt ?? now,
       updatedAt:   now,
     };
+
+    // Daten an dein Azure-Backend schicken
+    try {
+      const method = initial ? 'PUT' : 'POST';
+      const url = initial ? `/api/transactions/${tx.id}` : '/api/transactions';
+
+      await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tx),
+      });
+      console.log("Erfolgreich an Azure gesendet!");
+    } catch (error) {
+      console.error("Fehler beim Senden an die Datenbank:", error);
+    }
+
     onSave(tx);
     onClose();
   };
