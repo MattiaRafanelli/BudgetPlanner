@@ -58,7 +58,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const result = await pool.query(
-      `SELECT t.*, c.name AS category_name, c.icon AS category_icon, c.color AS category_color,
+      `SELECT t.*, c.name AS category_name, COALESCE(c.icon, 'Tag') AS category_icon, COALESCE(c.color, '#999999') AS category_color,
               a.name AS account_name
        FROM transactions t
        LEFT JOIN categories c ON t.category_id = c.id

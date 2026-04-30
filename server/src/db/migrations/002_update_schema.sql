@@ -1,0 +1,2 @@
+-- Migration 2 is now empty - 001 handles everything
+-- This file is kept for version tracking only

@@ -10,16 +10,16 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  ssl: {
-    rejectUnauthorized: false, // ⚠️ WICHTIG für Azure!
-  },
+  ssl: process.env.DB_HOST?.includes('azure') 
+    ? { rejectUnauthorized: false } // ⚠️ WICHTIG für Azure!
+    : false, // Lokal kein SSL nötig
   // Connection Pool Settings
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000, // Erhöht für Netzwerk-Latenzen
-  statement_timeout: 30000, // Query Timeout
-  query_timeout: 30000,
-});
+  connectionTimeoutMillis: 30000, // 30s für Netzwerk-Latenzen (Azure)
+  statement_timeout: 60000, // Query Timeout
+  query_timeout: 60000,
+} as any);
 
 // ============================================================================
 // Pool Event Listeners
@@ -32,7 +32,7 @@ pool.on('connect', (client: PoolClient) => {
 pool.on('error', (err: Error, client: PoolClient) => {
   console.error('❌ [DB] Unexpected error on client:', err.message);
   console.error('   Stack:', err.stack);
-  process.exit(-1); // Force restart bei kritischen Fehlern
+  // ⚠️ Nicht crashen - nur warnnen, damit app weiterläuft
 });
 
 pool.on('remove', () => {
