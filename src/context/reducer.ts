@@ -123,6 +123,12 @@ export function reducer(state: AppState, action: AppAction): AppState {
     case 'LOAD_STATE':
       return { ...state, ...action.payload };
 
+    case 'SET_ACCOUNTS':
+      return { ...state, accounts: action.payload };
+
+    case 'SET_TRANSACTIONS':
+      return { ...state, transactions: action.payload };
+
     default:
       return state;
   }

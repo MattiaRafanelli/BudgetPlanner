@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
+import { calculatePayday, isWeekend, isPublicHoliday } from '@/utils/payday';
 
 interface CalendarDay {
   date: Date;
@@ -28,16 +29,9 @@ const BudgetCalendar: React.FC<CalendarViewProps> = ({
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  // Calculate payday (1st of month, adjusted for weekends)
-  const calculatePayday = (date: Date): number => {
-    const payday = new Date(date.getFullYear(), date.getMonth(), 1);
-    const dayOfWeek = payday.getDay();
-    if (dayOfWeek === 6) payday.setDate(payday.getDate() - 1); // Saturday → Friday
-    if (dayOfWeek === 0) payday.setDate(payday.getDate() - 2); // Sunday → Friday
-    return payday.getDate();
-  };
-
-  const paydayDate = calculatePayday(currentDate);
+  // Get the payday date (25th, adjusted for weekends and holidays)
+  const paydayObj = calculatePayday(currentDate);
+  const paydayDate = paydayObj.getDate();
 
   // Get all days for the calendar
   const getDaysInMonth = (date: Date): CalendarDay[] => {
@@ -123,15 +117,15 @@ const BudgetCalendar: React.FC<CalendarViewProps> = ({
     today.getFullYear() === currentDate.getFullYear();
 
   return (
-    <div className="bg-surface border border-border rounded-2xl overflow-hidden">
+    <div className="bg-surface border-0 overflow-hidden h-full w-full flex flex-col rounded-none">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-elevated/50">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-elevated/50 shrink-0">
         <div>
-          <h2 className="text-lg font-bold text-text-primary">
+          <h2 className="text-xl font-bold text-text-primary">
             {monthName} {year}
           </h2>
           <p className="text-xs text-text-muted mt-0.5">
-            💰 Payday: {paydayDate}{paydayDate === 1 ? 'st' : paydayDate === 21 || paydayDate === 31 ? 'st' : 'nd'}
+            💰 Payday: {paydayDate}{paydayDate === 1 || paydayDate === 21 || paydayDate === 31 ? 'st' : paydayDate === 2 || paydayDate === 22 ? 'nd' : paydayDate === 3 || paydayDate === 23 ? 'rd' : 'th'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -161,17 +155,17 @@ const BudgetCalendar: React.FC<CalendarViewProps> = ({
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
           <div
             key={day}
-            className="h-12 flex items-center justify-center text-xs font-semibold text-text-muted uppercase tracking-wide border-r border-border last:border-r-0"
+            className="h-10 flex items-center justify-center text-xs font-semibold text-text-muted uppercase tracking-wide border-r border-border last:border-r-0"
           >
             {day}
           </div>
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div className="divide-y divide-border">
+      {/* Calendar grid - flex-1 to fill remaining space */}
+      <div className="divide-y divide-border flex-1 flex flex-col overflow-hidden">
         {weeks.map((week, weekIndex) => (
-          <div key={weekIndex} className="grid grid-cols-7 divide-x divide-border">
+          <div key={weekIndex} className="grid grid-cols-7 divide-x divide-border flex-1">
             {week.map((dayObj, dayIndex) => {
               const isToday =
                 isCurrentMonth &&
@@ -184,7 +178,7 @@ const BudgetCalendar: React.FC<CalendarViewProps> = ({
                   key={`${weekIndex}-${dayIndex}`}
                   onClick={() => onSelectDay && onSelectDay(dayObj.date)}
                   className={`
-                    min-h-28 p-3 transition-all cursor-pointer group
+                    p-3 transition-all cursor-pointer group flex flex-col
                     ${dayObj.isCurrentMonth ? 'hover:bg-elevated' : 'bg-surface/50'}
                     ${isToday ? 'bg-accent-primary/10' : ''}
                     ${dayObj.isPayday && dayObj.isCurrentMonth ? 'bg-accent-green/5 border-2 border-accent-green/30' : ''}
@@ -193,16 +187,16 @@ const BudgetCalendar: React.FC<CalendarViewProps> = ({
                   <div className="flex items-start justify-between mb-2">
                     <span
                       className={`
-                        text-sm font-bold w-7 h-7 flex items-center justify-center rounded-lg
+                        text-base font-bold w-8 h-8 flex items-center justify-center rounded-lg
                         ${!dayObj.isCurrentMonth ? 'text-text-muted' : 'text-text-primary'}
                         ${isToday ? 'bg-accent-primary text-white' : ''}
-                        ${dayObj.isPayday && dayObj.isCurrentMonth ? 'bg-accent-green/20 text-accent-green' : ''}
+                        ${dayObj.isPayday && dayObj.isCurrentMonth ? 'bg-accent-green/20 text-accent-green font-bold' : ''}
                       `}
                     >
                       {dayObj.day}
                     </span>
                     {dayObj.isPayday && dayObj.isCurrentMonth && (
-                      <span className="text-xs px-1.5 py-0.5 bg-accent-green/20 text-accent-green rounded font-medium">
+                      <span className="text-sm px-1.5 py-0.5 bg-accent-green/20 text-accent-green rounded font-medium">
                         💰
                       </span>
                     )}
@@ -242,22 +236,6 @@ const BudgetCalendar: React.FC<CalendarViewProps> = ({
             })}
           </div>
         ))}
-      </div>
-
-      {/* Legend */}
-      <div className="px-6 py-4 border-t border-border bg-elevated/30 flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-accent-green/30"></div>
-          <span className="text-text-muted">Payday</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <TrendingUp size={14} className="text-accent-green" />
-          <span className="text-text-muted">Income</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <TrendingDown size={14} className="text-accent-red" />
-          <span className="text-text-muted">Expenses</span>
-        </div>
       </div>
     </div>
   );

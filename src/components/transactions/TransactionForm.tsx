@@ -113,19 +113,34 @@ export function TransactionForm({
       updatedAt:   now,
     };
 
-    // Daten an dein Azure-Backend schicken
+    // Send to backend with correct field names (snake_case)
     try {
       const method = initial ? 'PUT' : 'POST';
       const url = initial ? `/api/transactions/${tx.id}` : '/api/transactions';
+      
+      // Transform for backend
+      const backendPayload = {
+        account_id: tx.accountId,
+        category_id: tx.category,
+        amount: tx.amount,
+        type: tx.type,
+        description: tx.description,
+        date: tx.date,
+      };
 
-      await fetch(url, {
+      const response = await fetch(url, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(tx),
+        body: JSON.stringify(backendPayload),
       });
-      console.log("Erfolgreich an Azure gesendet!");
+      
+      if (response.ok) {
+        console.log("Erfolgreich an Backend gesendet!");
+      } else {
+        console.error("Backend error:", response.status);
+      }
     } catch (error) {
       console.error("Fehler beim Senden an die Datenbank:", error);
     }

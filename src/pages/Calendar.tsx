@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useBudget } from '@/hooks/useBudget';
 import { TopBar } from '@/components/layout/TopBar';
-import { PageContainer } from '@/components/layout/PageContainer';
 import BudgetCalendar from '@/components/calendar/CalendarView';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 
@@ -36,21 +35,20 @@ export const Calendar = () => {
     <>
       <TopBar
         title="Calendar"
+        hidePeriodSelector={true}
         onAddTransaction={() => {
           setSelectedTransaction(null);
           setSelectedDate(null);
           setIsModalOpen(true);
         }}
       />
-      <PageContainer>
-        <div className="space-y-6">
-          <BudgetCalendar
-            transactions={transactions}
-            currency="CHF"
-            onSelectDay={handleSelectDay}
-          />
-        </div>
-      </PageContainer>
+      <div className="flex-1 overflow-hidden">
+        <BudgetCalendar
+          transactions={transactions}
+          currency="CHF"
+          onSelectDay={handleSelectDay}
+        />
+      </div>
       <TransactionForm
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

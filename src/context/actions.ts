@@ -22,4 +22,6 @@ export type AppAction =
   | { type: 'SET_PERIOD';         payload: BudgetPeriod }
   | { type: 'SELECT_ACCOUNT';     payload: { id: string | null } }
   | { type: 'TOGGLE_SIDEBAR' }
-  | { type: 'LOAD_STATE';         payload: Partial<AppState> };
+  | { type: 'LOAD_STATE';         payload: Partial<AppState> }
+  | { type: 'SET_ACCOUNTS';       payload: Account[] }
+  | { type: 'SET_TRANSACTIONS';   payload: Transaction[] };

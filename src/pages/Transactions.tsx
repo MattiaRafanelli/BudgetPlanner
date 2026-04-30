@@ -58,6 +58,11 @@ export function Transactions() {
   };
 
   const handleDelete = (id: string) => {
+    // Send DELETE request to backend
+    fetch(`/api/transactions/${id}`, { method: 'DELETE' })
+      .catch(error => console.error('Failed to delete transaction from backend:', error));
+    
+    // Update local state
     dispatch({ type: 'DELETE_TRANSACTION', payload: { id } });
   };
 

@@ -6,9 +6,10 @@ import { MONTHS } from '@/constants';
 interface TopBarProps {
   title: string;
   onAddTransaction?: () => void;
+  hidePeriodSelector?: boolean;
 }
 
-export function TopBar({ title, onAddTransaction }: TopBarProps) {
+export function TopBar({ title, onAddTransaction, hidePeriodSelector = false }: TopBarProps) {
   const { state, dispatch } = useBudget();
   const { month, year } = state.activePeriod;
 
@@ -31,7 +32,8 @@ export function TopBar({ title, onAddTransaction }: TopBarProps) {
       <h1 className="text-base md:text-lg font-bold text-text-primary truncate">{title}</h1>
 
       <div className="flex items-center gap-2 shrink-0">
-        {/* Period selector */}
+        {/* Period selector - hidden for calendar */}
+        {!hidePeriodSelector && (
         <div className="flex items-center gap-0.5 bg-elevated border border-border rounded-xl px-1 py-1">
           <button
             onClick={prevMonth}
@@ -61,6 +63,7 @@ export function TopBar({ title, onAddTransaction }: TopBarProps) {
             <ChevronRight size={15} />
           </button>
         </div>
+        )}
 
         {/* Add Transaction — icon only on mobile, full button on desktop */}
         {onAddTransaction && (

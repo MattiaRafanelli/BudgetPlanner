@@ -41,6 +41,11 @@ export function Accounts() {
 
   const handleDeleteAccount = (id: string) => {
     if (window.confirm('Delete this account and all its transactions?')) {
+      // Send DELETE request to backend
+      fetch(`/api/accounts/${id}`, { method: 'DELETE' })
+        .catch(error => console.error('Failed to delete account from backend:', error));
+      
+      // Update local state
       dispatch({ type: 'DELETE_ACCOUNT', payload: { id } });
       if (selectedId === id) setSelectedId(null);
     }
@@ -56,7 +61,7 @@ export function Accounts() {
 
   return (
     <>
-      <TopBar title="Accounts" />
+      <TopBar title="Accounts" hidePeriodSelector={true} />
       <PageContainer>
         <div className="space-y-6">
           {/* Header */}
@@ -149,9 +154,14 @@ export function Accounts() {
                   setEditTx(tx);
                   setShowTxForm(true);
                 }}
-                onDelete={(id) =>
-                  dispatch({ type: 'DELETE_TRANSACTION', payload: { id } })
-                }
+                onDelete={(id) => {
+                  // Send DELETE request to backend
+                  fetch(`/api/transactions/${id}`, { method: 'DELETE' })
+                    .catch(error => console.error('Failed to delete transaction from backend:', error));
+                  
+                  // Update local state
+                  dispatch({ type: 'DELETE_TRANSACTION', payload: { id } });
+                }}
               />
             </Card>
           )}

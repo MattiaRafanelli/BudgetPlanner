@@ -276,7 +276,7 @@ export function Categories() {
 
   return (
     <>
-      <TopBar title="Categories" />
+      <TopBar title="Categories" hidePeriodSelector={true} />
       <PageContainer>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           <CategoryColumn

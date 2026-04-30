@@ -60,7 +60,7 @@ export function AccountForm({ isOpen, onClose, onSave, initial }: AccountFormPro
     return errs;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) {
@@ -78,6 +78,33 @@ export function AccountForm({ isOpen, onClose, onSave, initial }: AccountFormPro
       isArchived: false,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
+
+    // Send to backend with correct field names
+    try {
+      const method = initial ? 'PUT' : 'POST';
+      const url = initial ? `/api/accounts/${account.id}` : '/api/accounts';
+
+      // Transform account object for backend (use 'balance' instead of 'initialBalance')
+      const backendPayload = {
+        name: account.name,
+        type: account.type,
+        balance: account.initialBalance,
+        currency: account.currency,
+      };
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backendPayload),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to save account to backend:', response.status);
+      }
+    } catch (error) {
+      console.error('Error saving account:', error);
+    }
+
     onSave(account);
     onClose();
   };
