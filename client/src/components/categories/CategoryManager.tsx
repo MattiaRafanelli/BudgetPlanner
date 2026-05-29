@@ -1,234 +1,338 @@
-import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Tag, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import type { Category } from '@/types';
-import { useBudget } from '@/hooks/useBudget';
-import { useCategories } from '@/hooks/useCategories';
-import { CategoryForm } from './CategoryForm';
-import { DynamicIcon } from '@/components/DynamicIcon';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { DynamicIcon } from '@/components/DynamicIcon';
+import { COLOR_PRESETS, ICON_OPTIONS } from '@/constants';
+import { useCategories } from '@/hooks/useCategories';
 
-interface CategoryManagerProps {
+interface CategoryFormProps {
   isOpen: boolean;
   onClose: () => void;
+  onSave: (category: Category) => void;
+  initial?: Category | null;
+  defaultType?: 'income' | 'expense';
 }
 
-function CategoryRow({
-  category,
-  children,
-  onEdit,
-  onDelete,
-}: {
-  category: Category;
-  children?: Category[];
-  onEdit: (c: Category) => void;
-  onDelete: (c: Category) => void;
-}) {
-  const [expanded, setExpanded] = useState(true);
-  const hasChildren = children && children.length > 0;
+interface FormState {
+  name: string;
+  type: 'income' | 'expense';
+  color: string;
+  icon: string;
+  parentId: string;
+  iconSearch: string;
+  error: string;
+}
+
+const getInitialState = (
+  initial: Category | null | undefined,
+  defaultType: 'income' | 'expense' = 'expense'
+): FormState => {
+  if (initial) {
+    return {
+      name: initial.name,
+      type: initial.type,
+      color: initial.color,
+      icon: initial.icon,
+      parentId: initial.parentId ?? 'none',
+      iconSearch: '',
+      error: '',
+    };
+  }
+
+  return {
+    name: '',
+    type: defaultType,
+    color: COLOR_PRESETS[0],
+    icon: 'Tag',
+    parentId: 'none',
+    iconSearch: '',
+    error: '',
+  };
+};
+
+export function CategoryForm({
+  isOpen,
+  onClose,
+  onSave,
+  initial,
+  defaultType = 'expense',
+}: CategoryFormProps) {
+  const { topLevelExpense, topLevelIncome } = useCategories();
+
+  const [formState, setFormState] = useState<FormState>(
+    getInitialState(initial, defaultType)
+  );
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormState(getInitialState(initial, defaultType));
+    }
+  }, [isOpen]); // ← NUR isOpen, NOT defaultType!
+
+  const parentOptions =
+    formState.type === 'expense' ? topLevelExpense : topLevelIncome;
+
+  const filteredIcons = formState.iconSearch
+    ? ICON_OPTIONS.filter((i) =>
+        i.toLowerCase().includes(formState.iconSearch.toLowerCase())
+      )
+    : ICON_OPTIONS;
+
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState((prev) => ({
+      ...prev,
+      name: e.target.value,
+      error: '',
+    }));
+  }, []);
+
+  const handleTypeChange = useCallback((newType: 'income' | 'expense') => {
+    setFormState((prev) => ({
+      ...prev,
+      type: newType,
+      parentId: 'none', // Reset parent when changing type
+    }));
+  }, []);
+
+  const handleColorChange = useCallback((newColor: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      color: newColor,
+    }));
+  }, []);
+
+  const handleIconChange = useCallback((newIcon: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      icon: newIcon,
+    }));
+  }, []);
+
+  const handleParentIdChange = useCallback((newParentId: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      parentId: newParentId,
+    }));
+  }, []);
+
+  const handleIconSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormState((prev) => ({
+        ...prev,
+        iconSearch: e.target.value,
+      }));
+    },
+    []
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formState.name.trim()) {
+      setFormState((prev) => ({
+        ...prev,
+        error: 'Name is required',
+      }));
+      return;
+    }
+
+    const slug = formState.name
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '');
+
+    const category: Category = {
+      id: initial?.id ?? `custom_${slug}_${uuidv4().slice(0, 6)}`,
+      name: formState.name.trim(),
+      type: formState.type,
+      color: formState.color,
+      icon: formState.icon,
+      parentId: formState.parentId === 'none' ? null : formState.parentId,
+      isBuiltIn: false,
+    };
+
+    onSave(category);
+    onClose();
+  };
 
   return (
-    <div>
-      <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-elevated rounded-xl transition-colors group">
-        {/* Expand toggle */}
-        <button
-          type="button"
-          onClick={() => hasChildren && setExpanded((v) => !v)}
-          className={`w-4 shrink-0 ${hasChildren ? 'text-text-muted hover:text-text-primary' : 'text-transparent'}`}
-        >
-          <ChevronRight
-            size={14}
-            className={`transition-transform ${expanded && hasChildren ? 'rotate-90' : ''}`}
-          />
-        </button>
-
-        {/* Icon */}
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${category.color}20` }}
-        >
-          <DynamicIcon name={category.icon} size={15} style={{ color: category.color }} />
-        </div>
-
-        {/* Name */}
-        <span className="flex-1 text-sm font-medium text-text-primary">{category.name}</span>
-
-        {/* Badges */}
-        <div className="flex items-center gap-2">
-          {category.isBuiltIn && (
-            <Badge color="#475569" className="text-[10px]">Built-in</Badge>
-          )}
-          <Badge color={category.color} className="text-[10px] capitalize">{category.type}</Badge>
-        </div>
-
-        {/* Actions — only for custom categories */}
-        {!category.isBuiltIn && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={initial ? 'Edit Category' : 'New Category'}
+      size="lg"
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Type toggle */}
+        <div className="flex gap-2 p-1 bg-elevated rounded-xl">
+          {(['expense', 'income'] as const).map((t) => (
             <button
-              onClick={() => onEdit(category)}
-              className="p-1.5 text-text-muted hover:text-text-primary hover:bg-border rounded-lg transition-colors"
+              key={t}
+              type="button"
+              disabled={!!initial}
+              onClick={() => handleTypeChange(t)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${
+                formState.type === t
+                  ? 'bg-accent-primary text-white'
+                  : 'text-text-muted hover:text-text-primary'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              <Pencil size={13} />
+              {t}
             </button>
-            <button
-              onClick={() => onDelete(category)}
-              className="p-1.5 text-text-muted hover:text-accent-red hover:bg-accent-red/10 rounded-lg transition-colors"
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Subcategories */}
-      {hasChildren && expanded && (
-        <div className="ml-7 pl-4 border-l border-border space-y-0 mt-0.5 mb-1">
-          {children!.map((child) => (
-            <div
-              key={child.id}
-              className="flex items-center gap-3 px-3 py-2 hover:bg-elevated rounded-xl transition-colors group"
-            >
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `${child.color}20` }}
-              >
-                <DynamicIcon name={child.icon} size={13} style={{ color: child.color }} />
-              </div>
-              <span className="flex-1 text-xs font-medium text-text-secondary">{child.name}</span>
-              <Badge color={child.color} className="text-[10px] capitalize">{child.type}</Badge>
-              {!child.isBuiltIn && (
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => onEdit(child)}
-                    className="p-1 text-text-muted hover:text-text-primary hover:bg-border rounded-lg transition-colors"
-                  >
-                    <Pencil size={12} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(child)}
-                    className="p-1 text-text-muted hover:text-accent-red hover:bg-accent-red/10 rounded-lg transition-colors"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              )}
-            </div>
           ))}
         </div>
-      )}
-    </div>
-  );
-}
 
-export function CategoryManager({ isOpen, onClose }: CategoryManagerProps) {
-  const { dispatch } = useBudget();
-  const {
-    allCategories,
-    topLevelExpense,
-    topLevelIncome,
-    expenseCategories,
-    incomeCategories,
-  } = useCategories();
+        <Input
+          label="Category Name"
+          placeholder="e.g. Gym, Groceries, Freelance Design…"
+          value={formState.name}
+          onChange={handleNameChange}
+          error={formState.error}
+        />
 
-  const [showForm, setShowForm]           = useState(false);
-  const [editCategory, setEditCategory]   = useState<Category | null>(null);
-  const [defaultType, setDefaultType]     = useState<'income' | 'expense'>('expense');
-  const [activeTab, setActiveTab]         = useState<'expense' | 'income'>('expense');
-
-  const handleSave = (cat: Category) => {
-    if (editCategory) {
-      dispatch({ type: 'UPDATE_CATEGORY', payload: cat });
-    } else {
-      dispatch({ type: 'ADD_CATEGORY', payload: cat });
-    }
-  };
-
-  const handleDelete = (cat: Category) => {
-    const hasChildren = allCategories.some((c) => c.parentId === cat.id);
-    const msg = hasChildren
-      ? `Delete "${cat.name}" and all its subcategories?`
-      : `Delete "${cat.name}"?`;
-    if (window.confirm(msg)) {
-      dispatch({ type: 'DELETE_CATEGORY', payload: { id: cat.id } });
-    }
-  };
-
-  const openAdd = (type: 'income' | 'expense') => {
-    setEditCategory(null);
-    setDefaultType(type);
-    setShowForm(true);
-  };
-
-  const openEdit = (cat: Category) => {
-    setEditCategory(cat);
-    setDefaultType(cat.type);
-    setShowForm(true);
-  };
-
-  const topLevel     = activeTab === 'expense' ? topLevelExpense : topLevelIncome;
-  const allOfType    = activeTab === 'expense' ? expenseCategories : incomeCategories;
-
-  return (
-    <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Manage Categories" size="lg">
-        <div className="space-y-4">
-          {/* Tabs */}
-          <div className="flex gap-2 p-1 bg-elevated rounded-xl">
-            {(['expense', 'income'] as const).map((t) => (
+        {/* Parent category */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-text-secondary uppercase tracking-wide">
+            Subcategory of (optional)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => handleParentIdChange('none')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+                formState.parentId === 'none'
+                  ? 'bg-accent-primary/15 border-accent-primary/40 text-accent-primary'
+                  : 'border-border text-text-muted hover:text-text-primary hover:border-border'
+              }`}
+            >
+              Top-level
+            </button>
+            {parentOptions.map((p) => (
               <button
-                key={t}
-                onClick={() => setActiveTab(t)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize ${
-                  activeTab === t ? 'bg-accent-primary text-white' : 'text-text-muted hover:text-text-primary'
+                key={p.id}
+                type="button"
+                onClick={() => handleParentIdChange(p.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
+                  formState.parentId === p.id
+                    ? 'border-opacity-40 text-white'
+                    : 'border-border text-text-muted hover:text-text-primary'
                 }`}
+                style={
+                  formState.parentId === p.id
+                    ? {
+                        backgroundColor: `${p.color}20`,
+                        borderColor: `${p.color}60`,
+                        color: p.color,
+                      }
+                    : {}
+                }
               >
-                {t}
+                <DynamicIcon name={p.icon} size={12} />
+                {p.name}
               </button>
             ))}
           </div>
+        </div>
 
-          {/* List */}
-          <div className="space-y-0.5 max-h-[420px] overflow-y-auto pr-1">
-            {topLevel.length === 0 ? (
-              <EmptyState icon={<Tag size={22} />} title="No categories" />
-            ) : (
-              topLevel.map((parent) => (
-                <CategoryRow
-                  key={parent.id}
-                  category={parent}
-                  children={allOfType.filter((c) => c.parentId === parent.id)}
-                  onEdit={openEdit}
-                  onDelete={handleDelete}
-                />
-              ))
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="flex justify-between items-center pt-2 border-t border-border">
-            <p className="text-xs text-text-muted">
-              {allOfType.filter((c) => !c.isBuiltIn).length} custom {activeTab} categories
-            </p>
-            <Button
-              size="sm"
-              icon={<Plus size={14} />}
-              onClick={() => openAdd(activeTab)}
-            >
-              New {activeTab === 'expense' ? 'Expense' : 'Income'} Category
-            </Button>
+        {/* Color */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-text-secondary uppercase tracking-wide">
+            Color
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {COLOR_PRESETS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => handleColorChange(c)}
+                className={`w-7 h-7 rounded-full transition-all ${
+                  formState.color === c
+                    ? 'ring-2 ring-white ring-offset-2 ring-offset-surface scale-110'
+                    : ''
+                }`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
           </div>
         </div>
-      </Modal>
 
-      <CategoryForm
-        isOpen={showForm}
-        onClose={() => setShowForm(false)}
-        onSave={handleSave}
-        initial={editCategory}
-        defaultType={defaultType}
-      />
-    </>
+        {/* Icon picker */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-text-secondary uppercase tracking-wide">
+            Icon
+          </label>
+          <Input
+            placeholder="Search icons…"
+            value={formState.iconSearch}
+            onChange={handleIconSearchChange}
+          />
+          <div className="grid grid-cols-8 gap-1.5 max-h-40 overflow-y-auto pr-1">
+            {filteredIcons.map((ic) => (
+              <button
+                key={ic}
+                type="button"
+                onClick={() => handleIconChange(ic)}
+                title={ic}
+                className={`w-full aspect-square flex items-center justify-center rounded-xl transition-all ${
+                  formState.icon === ic
+                    ? 'ring-2 ring-offset-1 ring-offset-surface'
+                    : 'hover:bg-elevated'
+                }`}
+                style={
+                  formState.icon === ic
+                    ? { backgroundColor: `${formState.color}20` }
+                    : {}
+                }
+              >
+                <DynamicIcon
+                  name={ic}
+                  size={16}
+                  style={{
+                    color:
+                      formState.icon === ic ? formState.color : '#94A3B8',
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Preview */}
+        <div className="flex items-center gap-3 p-3 bg-elevated rounded-xl border border-border">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ backgroundColor: `${formState.color}20` }}
+          >
+            <DynamicIcon
+              name={formState.icon}
+              size={20}
+              style={{ color: formState.color }}
+            />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-text-primary">
+              {formState.name || 'Category Name'}
+            </p>
+            <p className="text-xs text-text-muted capitalize">
+              {formState.type}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-1">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {initial ? 'Save Changes' : 'Create Category'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

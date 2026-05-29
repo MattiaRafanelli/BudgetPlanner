@@ -89,7 +89,10 @@ pool.on('remove', () => {
     // Nicht crashen, aber warnen
     console.warn('⚠️  [WARNING] Continuing without DB connection...');
   }
-})();
+})().catch((err) => {
+  console.error('❌ [STARTUP] Uncaught error in DB startup:', err);
+  // Don't crash - just log and continue
+});
 
 // ============================================================================
 // Query Helper Functions

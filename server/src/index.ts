@@ -91,11 +91,12 @@ app.use(errorHandler);
 // Server Startup
 // ============================================================================
 
-async function startServer() {
+(async () => {
   try {
-    // Run migrations first with retries
-    await runMigrations(5, 3000); // 5 attempts, 3s between attempts
+    // Run migrations first
+    await runMigrations();
 
+    // Then start the server
     const server = app.listen(PORT, () => {
       console.log(`
 ╔════════════════════════════════════════╗
@@ -115,7 +116,10 @@ async function startServer() {
 `);
     });
 
-    // Graceful shutdown
+    // ========================================================================
+    // Graceful Shutdown
+    // ========================================================================
+
     process.on('SIGTERM', async () => {
       console.log('🛑 SIGTERM received, shutting down gracefully...');
       server.close(async () => {
@@ -130,25 +134,11 @@ async function startServer() {
         }
       });
     });
-  } catch (error: any) {
-    const errorMsg = error?.message || 'Unknown error';
-    console.error('❌ Failed to start server:', errorMsg);
-    
-    // Nur bei Migrations-Fehler exit - sonst trotzdem starten (z.B. für lokal Entwicklung)
-    if (errorMsg.includes('Connection')) {
-      console.error('⚠️  Database connection failed. Possible causes:');
-      console.error('   - Azure Firewall blocking your IP');
-      console.error('   - Wrong database credentials');
-      console.error('   - Database server is down');
-      console.error('   - Network connectivity issue');
-      console.error('\n💡 For local development, check your .env file');
-      process.exit(1);
-    }
-    
+
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
-}
-
-startServer();
+})();
 
 export default app;

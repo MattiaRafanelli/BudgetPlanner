@@ -87,6 +87,7 @@ export interface AppState {
   transactions: Transaction[];
   budgetLimits: BudgetLimit[];
   customCategories: Category[];
+  hiddenBuiltInCategories: string[];
   activePeriod: BudgetPeriod;
   selectedAccountId: string | null;
   ui: {

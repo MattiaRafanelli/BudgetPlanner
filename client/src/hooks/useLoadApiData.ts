@@ -12,8 +12,39 @@ export function useLoadApiData(
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Get auth token
+        const session = sessionStorage.getItem('userSession');
+        let token = '';
+        if (session) {
+          try {
+            const parsed = JSON.parse(session);
+            token = parsed.token;
+          } catch {
+            // ignore
+          }
+        }
+
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Fetch categories first
+        const categoriesRes = await fetch('/api/categories', { headers });
+        if (categoriesRes.ok) {
+          const { data: categories } = await categoriesRes.json();
+          // Build a mapping of category name/slug to ID for use in transactions
+          const categoryMap: Record<string, string> = {};
+          categories.forEach((cat: any) => {
+            // Map by id (slug-like: "food", "housing") to UUID
+            categoryMap[cat.id] = cat.id; // Keep as UUID
+          });
+          // Store in a way that TransactionForm can access it
+          sessionStorage.setItem('categoryMap', JSON.stringify(categoryMap));
+        }
+
         // Fetch accounts
-        const accountsRes = await fetch('/api/accounts');
+        const accountsRes = await fetch('/api/accounts', { headers });
         if (accountsRes.ok) {
           const accounts = await accountsRes.json();
           // Transform backend snake_case to frontend camelCase
@@ -22,17 +53,17 @@ export function useLoadApiData(
             name: acc.name,
             type: acc.type,
             currency: acc.currency,
-            initialBalance: acc.balance || 0,
+            initialBalance: isNaN(Number(acc.balance)) ? 0 : Number(acc.balance),
             color: acc.color || '#8B5CF6',
             icon: acc.icon || 'Wallet',
-            isArchived: acc.is_archived || false,
+            isArchived: acc.is_active === false,
             createdAt: acc.created_at || new Date().toISOString(),
           }));
           dispatch({ type: 'SET_ACCOUNTS', payload: transformedAccounts });
         }
 
         // Fetch transactions
-        const transactionsRes = await fetch('/api/transactions');
+        const transactionsRes = await fetch('/api/transactions', { headers });
         if (transactionsRes.ok) {
           const transactions = await transactionsRes.json();
           // Transform backend snake_case to frontend camelCase
@@ -44,7 +75,7 @@ export function useLoadApiData(
             category: tx.category_id,
             amount: tx.amount,
             description: tx.description || '',
-            date: tx.date,
+            date: tx.transaction_date,
             recurrence: tx.recurrence || 'none',
             tags: tx.tags || [],
             createdAt: tx.created_at || new Date().toISOString(),

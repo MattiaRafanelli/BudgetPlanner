@@ -19,6 +19,8 @@ export type AppAction =
   | { type: 'ADD_CATEGORY';       payload: Category }
   | { type: 'UPDATE_CATEGORY';    payload: Category }
   | { type: 'DELETE_CATEGORY';    payload: { id: string } }
+  | { type: 'HIDE_BUILTIN_CATEGORY'; payload: { id: string } }
+  | { type: 'SHOW_BUILTIN_CATEGORY'; payload: { id: string } }
   | { type: 'SET_PERIOD';         payload: BudgetPeriod }
   | { type: 'SELECT_ACCOUNT';     payload: { id: string | null } }
   | { type: 'TOGGLE_SIDEBAR' }

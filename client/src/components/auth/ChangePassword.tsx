@@ -28,12 +28,12 @@ export function ChangePassword({ onSuccess, token }: ChangePasswordProps) {
     setSuccess('');
 
     if (newPassword !== confirmPassword) {
-      setError('Neue Passwörter stimmen nicht überein');
+      setError('Passwords do not match');
       return;
     }
 
     if (newPassword.length < 8) {
-      setError('Passwort muss mindestens 8 Zeichen lang sein');
+      setError('Password must be at least 8 characters long');
       return;
     }
 
@@ -51,18 +51,18 @@ export function ChangePassword({ onSuccess, token }: ChangePasswordProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Passwort konnte nicht geändert werden');
+        setError(data.error || 'Could not change password');
         return;
       }
 
-      setSuccess('Passwort erfolgreich geändert!');
+      setSuccess('Password changed successfully!');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
 
       setTimeout(onSuccess, 1500);
     } catch (err) {
-      setError('Verbindungsfehler. Bitte versuchen Sie es erneut.');
+      setError('Connection error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -76,10 +76,10 @@ export function ChangePassword({ onSuccess, token }: ChangePasswordProps) {
             <AlertCircle className={`flex-shrink-0 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} size={20} />
             <div>
               <h2 className={`font-bold mb-2 ${isDark ? 'text-yellow-400' : 'text-yellow-800'}`}>
-                Passwort ändern erforderlich
+                Password Change Required
               </h2>
               <p className={`text-sm ${isDark ? 'text-yellow-300' : 'text-yellow-700'}`}>
-                Aus Sicherheitsgründen müssen Sie Ihr initiiales Passwort beim ersten Anmelden ändern.
+                For security, you must change your initial password on first login.
               </p>
             </div>
           </div>
@@ -90,7 +90,7 @@ export function ChangePassword({ onSuccess, token }: ChangePasswordProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="password"
-              placeholder="Aktuelles Passwort"
+              placeholder="Current Password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               disabled={loading}
@@ -98,7 +98,7 @@ export function ChangePassword({ onSuccess, token }: ChangePasswordProps) {
 
             <Input
               type="password"
-              placeholder="Neues Passwort (mind. 8 Zeichen)"
+              placeholder="New Password (min. 8 characters)"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               disabled={loading}
@@ -106,7 +106,7 @@ export function ChangePassword({ onSuccess, token }: ChangePasswordProps) {
 
             <Input
               type="password"
-              placeholder="Passwort bestätigen"
+              placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={loading}
@@ -117,7 +117,7 @@ export function ChangePassword({ onSuccess, token }: ChangePasswordProps) {
               disabled={loading || !currentPassword || !newPassword || !confirmPassword}
               className="w-full"
             >
-              {loading ? 'Passwort wird geändert...' : 'Passwort ändern'}
+              {loading ? 'Changing password...' : 'Change Password'}
             </Button>
           </form>
         </div>

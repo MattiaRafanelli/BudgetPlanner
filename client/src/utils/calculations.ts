@@ -12,6 +12,8 @@ export function computeAccountBalance(
   account: Account,
   transactions: Transaction[]
 ): number {
+  const initialBalance = typeof account.initialBalance === 'number' && !isNaN(account.initialBalance) ? account.initialBalance : 0;
+
   const accountTxs = transactions.filter(
     (t) => t.accountId === account.id || t.toAccountId === account.id
   );
@@ -27,7 +29,7 @@ export function computeAccountBalance(
     return sum;
   }, 0);
 
-  return account.initialBalance + delta;
+  return initialBalance + delta;
 }
 
 export function getTotalBalance(

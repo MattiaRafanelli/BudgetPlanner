@@ -35,6 +35,7 @@ export function AccountCard({
       {/* Actions */}
       <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         <button
+          title="Edit account"
           onClick={(e) => {
             e.stopPropagation();
             onEdit(account);
@@ -44,6 +45,7 @@ export function AccountCard({
           <Pencil size={13} />
         </button>
         <button
+          title="Delete account"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(account.id);
@@ -57,8 +59,9 @@ export function AccountCard({
       {/* Header */}
       <div className="flex items-start gap-3 mb-4">
         <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${account.color}20` }}
+          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 color-dynamic"
+          // @ts-expect-error CSS-in-JS for dynamic colors
+          style={{ '--color': `${account.color}20` }}
         >
           <DynamicIcon name={icon} size={20} style={{ color: account.color }} />
         </div>
@@ -76,7 +79,7 @@ export function AccountCard({
             balance >= 0 ? 'text-text-primary' : 'text-accent-red'
           }`}
         >
-          {formatCurrency(balance, account.currency)}
+          {formatCurrency(isNaN(balance) ? 0 : balance, account.currency)}
         </p>
       </div>
 

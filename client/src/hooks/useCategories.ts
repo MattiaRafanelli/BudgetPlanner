@@ -15,11 +15,14 @@ const FALLBACK: Category = {
 
 export function useCategories() {
   const { state } = useBudget();
-  const { customCategories } = state;
+  const { customCategories, hiddenBuiltInCategories } = state;
 
   const allCategories = useMemo<Category[]>(
-    () => [...BUILT_IN_CATEGORIES, ...customCategories],
-    [customCategories]
+    () => [
+      ...BUILT_IN_CATEGORIES.filter((c) => !hiddenBuiltInCategories.includes(c.id)),
+      ...customCategories,
+    ],
+    [customCategories, hiddenBuiltInCategories]
   );
 
   const expenseCategories = useMemo(

@@ -31,14 +31,14 @@ export const Login = memo(function Login({ onLogin }: LoginProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Login fehlgeschlagen');
+        setError(data.error || 'Login failed');
         return;
       }
 
       const data = await response.json();
       onLogin(data.token, data.user);
     } catch (err) {
-      setError('Verbindungsfehler. Bitte versuchen Sie es erneut.');
+      setError('Connection error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export const Login = memo(function Login({ onLogin }: LoginProps) {
                 Budget Planner
               </h1>
               <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-                Verwalte dein Budget intelligent
+                Manage your budget intelligently
               </p>
             </div>
 
@@ -103,7 +103,7 @@ export const Login = memo(function Login({ onLogin }: LoginProps) {
                 </div>
                 <Input
                   type="text"
-                  placeholder="Benutzername oder Email"
+                  placeholder="Username or Email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
@@ -122,7 +122,7 @@ export const Login = memo(function Login({ onLogin }: LoginProps) {
                 </div>
                 <Input
                   type="password"
-                  placeholder="Passwort"
+                  placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
@@ -147,24 +147,24 @@ export const Login = memo(function Login({ onLogin }: LoginProps) {
                 {loading ? (
                   <span className="flex items-center justify-center">
                     <span className="inline-block animate-spin mr-2">⏳</span>
-                    Anmelden...
+                    Signing in...
                   </span>
                 ) : (
-                  'Anmelden'
+                  'Sign In'
                 )}
               </Button>
             </form>
 
             {/* Info text */}
             <p className={`text-xs text-center mt-6 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-              Sichere Anmeldung • Verschlüsselte Verbindung
+              Secure Login • Encrypted Connection
             </p>
           </div>
         </Card>
 
         {/* Footer info */}
         <div className={`text-center mt-8 text-sm ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>
-          <p>© 2024 Budget Planner. Alle Rechte vorbehalten.</p>
+          <p>© 2024 Budget Planner. All rights reserved.</p>
         </div>
       </div>
     </div>

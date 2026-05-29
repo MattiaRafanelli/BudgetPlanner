@@ -17,9 +17,9 @@ interface BudgetFormProps {
 export function BudgetForm({ isOpen, onClose, onSave, initial }: BudgetFormProps) {
   const { getGroupedExpenseOptions, getCategoryIcon, getCategoryColor } = useCategories();
 
-  const [category, setCategory]       = useState('food');
+  const [category, setCategory]         = useState('food');
   const [monthlyLimit, setMonthlyLimit] = useState('');
-  const [errors, setErrors]           = useState<Record<string, string>>({});
+  const [errors, setErrors]             = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (initial) {
@@ -55,9 +55,11 @@ export function BudgetForm({ isOpen, onClose, onSave, initial }: BudgetFormProps
     >
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* Category select — grouped */}
+        {/* Category select — grouped, NO duplicates */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-text-secondary uppercase tracking-wide">Category</label>
+          <label className="text-xs font-medium text-text-secondary uppercase tracking-wide">
+            Category
+          </label>
           <div className="flex items-center gap-2">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
@@ -71,21 +73,34 @@ export function BudgetForm({ isOpen, onClose, onSave, initial }: BudgetFormProps
               disabled={!!initial}
               className="flex-1 bg-elevated border border-border rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30 transition-all disabled:opacity-50"
             >
-              {groups.map(({ parent, children }) => (
-                <optgroup key={parent.id} label={parent.name}>
-                  <option value={parent.id}>{parent.name}</option>
-                  {children.map((child) => (
-                    <option key={child.id} value={child.id}>{'  ↳ '}{child.name}</option>
-                  ))}
-                </optgroup>
-              ))}
+              {groups.map(({ parent, children }) =>
+                children.length > 0 ? (
+                  // Has subcategories → use optgroup, parent as first option inside
+                  <optgroup key={parent.id} label={parent.name}>
+                    <option value={parent.id}>{parent.name}</option>
+                    {children.map((child) => (
+                      <option key={child.id} value={child.id}>
+                        {'  ↳ '}{child.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : (
+                  // No subcategories → plain option, no group header
+                  <option key={parent.id} value={parent.id}>
+                    {parent.name}
+                  </option>
+                )
+              )}
             </select>
           </div>
         </div>
 
         <Input
           label="Monthly Limit"
-          type="number" min="0" step="0.01" placeholder="0.00"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
           value={monthlyLimit}
           onChange={(e) => setMonthlyLimit(e.target.value)}
           error={errors.monthlyLimit}
@@ -93,12 +108,18 @@ export function BudgetForm({ isOpen, onClose, onSave, initial }: BudgetFormProps
 
         {monthlyLimit && !isNaN(Number(monthlyLimit)) && (
           <p className="text-xs text-text-muted">
-            Yearly: ×12 = {(Number(monthlyLimit) * 12).toLocaleString('en-US', { style: 'currency', currency: 'CHF' })}
+            Yearly: ×12 ={' '}
+            {(Number(monthlyLimit) * 12).toLocaleString('en-US', {
+              style: 'currency',
+              currency: 'CHF',
+            })}
           </p>
         )}
 
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
           <Button type="submit">{initial ? 'Save Changes' : 'Set Limit'}</Button>
         </div>
       </form>

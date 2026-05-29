@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, ChevronRight, Tag, FolderOpen } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronRight, Tag } from 'lucide-react';
 import { TopBar } from '@/components/layout/TopBar';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { CategoryForm } from '@/components/categories/CategoryForm';
@@ -66,7 +66,7 @@ function CategoryRow({
           )}
         </div>
 
-        {/* Actions */}
+        {/* Actions — always visible for all categories (including built-in) */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onAddSub(category)}
@@ -75,22 +75,23 @@ function CategoryRow({
           >
             <Plus size={12} /> Sub
           </button>
+          {/* Edit only for custom categories */}
           {!category.isBuiltIn && (
-            <>
-              <button
-                onClick={() => onEdit(category)}
-                className="p-1.5 text-text-muted hover:text-text-primary hover:bg-border rounded-lg transition-colors"
-              >
-                <Pencil size={14} />
-              </button>
-              <button
-                onClick={() => onDelete(category)}
-                className="p-1.5 text-text-muted hover:text-accent-red hover:bg-accent-red/10 rounded-lg transition-colors"
-              >
-                <Trash2 size={14} />
-              </button>
-            </>
+            <button
+              onClick={() => onEdit(category)}
+              className="p-1.5 text-text-muted hover:text-text-primary hover:bg-border rounded-lg transition-colors"
+            >
+              <Pencil size={14} />
+            </button>
           )}
+          {/* Delete available for ALL categories */}
+          <button
+            onClick={() => onDelete(category)}
+            className="p-1.5 text-text-muted hover:text-accent-red hover:bg-accent-red/10 rounded-lg transition-colors"
+            title={category.isBuiltIn ? 'Remove built-in category' : 'Delete category'}
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
 
@@ -117,22 +118,23 @@ function CategoryRow({
               <span className="flex-1 text-sm text-text-secondary font-medium">{child.name}</span>
               <Badge color={child.color} className="text-[10px]">{child.type}</Badge>
 
-              {!child.isBuiltIn && (
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {!child.isBuiltIn && (
                   <button
                     onClick={() => onEdit(child)}
                     className="p-1.5 text-text-muted hover:text-text-primary hover:bg-border rounded-lg transition-colors"
                   >
                     <Pencil size={13} />
                   </button>
-                  <button
-                    onClick={() => onDelete(child)}
-                    className="p-1.5 text-text-muted hover:text-accent-red hover:bg-accent-red/10 rounded-lg transition-colors"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              )}
+                )}
+                {/* Delete for all subcategories */}
+                <button
+                  onClick={() => onDelete(child)}
+                  className="p-1.5 text-text-muted hover:text-accent-red hover:bg-accent-red/10 rounded-lg transition-colors"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -169,10 +171,7 @@ function CategoryColumn({
       {/* Column header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div
-            className="w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: color }}
-          />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
           <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">{title}</h2>
           <span className="text-xs text-text-muted">
             {topLevel.length} categories · {customCount} custom
@@ -222,9 +221,9 @@ export function Categories() {
     incomeCategories,
   } = useCategories();
 
-  const [showForm, setShowForm]         = useState(false);
-  const [editCategory, setEditCategory] = useState<Category | null>(null);
-  const [defaultType, setDefaultType]   = useState<'income' | 'expense'>('expense');
+  const [showForm, setShowForm]           = useState(false);
+  const [editCategory, setEditCategory]   = useState<Category | null>(null);
+  const [defaultType, setDefaultType]     = useState<'income' | 'expense'>('expense');
   const [defaultParent, setDefaultParent] = useState<string | null>(null);
 
   const openAdd = (type: 'income' | 'expense', parentId: string | null = null) => {
@@ -242,12 +241,19 @@ export function Categories() {
   };
 
   const handleDelete = (cat: Category) => {
-    const hasChildren = allCategories.some((c) => c.parentId === cat.id);
-    const msg = hasChildren
-      ? `Delete "${cat.name}" and all its subcategories?`
-      : `Delete "${cat.name}"?`;
-    if (window.confirm(msg)) {
-      dispatch({ type: 'DELETE_CATEGORY', payload: { id: cat.id } });
+    if (cat.isBuiltIn) {
+      const msg = `Remove "${cat.name}" from the list?`;
+      if (window.confirm(msg)) {
+        dispatch({ type: 'HIDE_BUILTIN_CATEGORY', payload: { id: cat.id } });
+      }
+    } else {
+      const hasChildren = allCategories.some((c) => c.parentId === cat.id);
+      const msg = hasChildren
+        ? `Delete "${cat.name}" and all its subcategories?`
+        : `Delete "${cat.name}"?`;
+      if (window.confirm(msg)) {
+        dispatch({ type: 'DELETE_CATEGORY', payload: { id: cat.id } });
+      }
     }
   };
 
@@ -259,7 +265,6 @@ export function Categories() {
     }
   };
 
-  // Build a CategoryForm initial value that pre-selects the parent
   const formInitial: Category | null = editCategory
     ? editCategory
     : defaultParent

@@ -1,3 +1,6 @@
 {
-    "liveServer.settings.port": 5501
+    "liveServer.settings.port": 5501,
+    "eslint.rules.customizations": [
+        { "rule": "react/no-inline-styles", "severity": "off" }
+    ]
 }

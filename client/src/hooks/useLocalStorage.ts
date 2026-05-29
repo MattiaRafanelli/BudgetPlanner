@@ -10,6 +10,7 @@ interface StoredData {
   transactions: AppState['transactions'];
   budgetLimits: AppState['budgetLimits'];
   customCategories: AppState['customCategories'];
+  hiddenBuiltInCategories: AppState['hiddenBuiltInCategories'];
   activePeriod: AppState['activePeriod'];
 }
 
@@ -19,11 +20,18 @@ export function loadFromStorage(): Partial<AppState> | null {
     if (!raw) return null;
     const data: StoredData = JSON.parse(raw);
     if (data.version !== 1) return null;
+
+    const accounts = (data.accounts ?? []).map((acc: any) => ({
+      ...acc,
+      initialBalance: isNaN(Number(acc.initialBalance)) ? 0 : Number(acc.initialBalance),
+    }));
+
     return {
-      accounts: data.accounts ?? [],
+      accounts,
       transactions: data.transactions ?? [],
       budgetLimits: data.budgetLimits ?? [],
       customCategories: data.customCategories ?? [],
+      hiddenBuiltInCategories: data.hiddenBuiltInCategories ?? [],
       activePeriod: data.activePeriod,
     };
   } catch {
@@ -53,6 +61,7 @@ export function useLocalStorage(
       transactions: state.transactions,
       budgetLimits: state.budgetLimits,
       customCategories: state.customCategories,
+      hiddenBuiltInCategories: state.hiddenBuiltInCategories,
       activePeriod: state.activePeriod,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));

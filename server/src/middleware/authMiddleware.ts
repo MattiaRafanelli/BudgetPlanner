@@ -4,6 +4,8 @@ import { verifyToken } from '../utils/auth';
 declare global {
   namespace Express {
     interface Request {
+      userId?: string;
+      isAdmin?: boolean;
       user?: {
         userId: string;
         isAdmin: boolean;
@@ -30,12 +32,14 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   }
 
   req.user = decoded;
+  req.userId = decoded.userId;
+  req.isAdmin = decoded.isAdmin;
   req.token = token;
   next();
 }
 
 export function adminMiddleware(req: Request, res: Response, next: NextFunction): void {
-  if (!req.user?.isAdmin) {
+  if (!req.isAdmin) {
     res.status(403).json({ error: 'Admin access required' });
     return;
   }

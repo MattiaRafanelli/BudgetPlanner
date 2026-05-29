@@ -51,17 +51,17 @@ const UserRow = memo(function UserRow({
       <td className="px-6 py-4">
         <div className="flex items-center gap-2">
           <Badge variant={user.is_active ? 'success' : 'danger'}>
-            {user.is_active ? 'Aktiv' : 'Inaktiv'}
+            {user.is_active ? 'Active' : 'Inactive'}
           </Badge>
           {user.must_change_password && (
-            <Badge variant="warning">Passwort ändern</Badge>
+            <Badge variant="warning">Change Password</Badge>
           )}
         </div>
       </td>
       <td className={`px-6 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
         {user.last_login
-          ? new Date(user.last_login).toLocaleDateString('de-DE')
-          : 'Nie'}
+          ? new Date(user.last_login).toLocaleDateString('en-US')
+          : 'Never'}
       </td>
       <td className="px-6 py-4">
         <div className="flex flex-wrap gap-2">
@@ -72,7 +72,7 @@ const UserRow = memo(function UserRow({
             className="flex items-center gap-1"
           >
             {user.is_active ? <X size={14} /> : <Check size={14} />}
-            {user.is_active ? 'Deaktivieren' : 'Aktivieren'}
+            {user.is_active ? 'Deactivate' : 'Activate'}
           </Button>
           <Button
             size="sm"
@@ -90,7 +90,7 @@ const UserRow = memo(function UserRow({
             className="flex items-center gap-1"
           >
             <Trash2 size={14} />
-            Löschen
+            Delete
           </Button>
         </div>
       </td>
@@ -150,12 +150,12 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
     setError('');
 
     if (!formData.username) {
-      setError('Benutzername ist erforderlich');
+      setError('Username is required');
       return;
     }
 
     if (!formData.firstName || !formData.lastName) {
-      setError('Vorname und Nachname sind erforderlich');
+      setError('First name and last name are required');
       return;
     }
 
@@ -168,13 +168,13 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Benutzer konnte nicht erstellt werden');
+        setError(data.error || 'Could not create user');
         return;
       }
 
       const data = await response.json();
       setTempPassword(data.temporaryPassword);
-      setSuccess('Benutzer erstellt! Teilen Sie das temporäre Passwort sicher mit.');
+      setSuccess('User created! Share the temporary password securely.');
       setFormData({ username: '', firstName: '', lastName: '' });
 
       // Reload users
@@ -183,7 +183,7 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
         setShowCreateModal(false);
       }, 2000);
     } catch (err) {
-      setError('Verbindungsfehler');
+      setError('Connection error');
     }
   };
 
@@ -290,26 +290,26 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
         {/* Stats Cards */}
         <div className={`${isDark ? 'bg-gradient-to-r from-blue-900 to-indigo-900' : 'bg-gradient-to-r from-blue-50 to-indigo-50'} rounded-lg p-6 mb-8 border ${isDark ? 'border-blue-800' : 'border-blue-200'}`}>
           <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            Benutzerverwaltung
+            User Management
           </h2>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <div className={`text-3xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                 {users.length}
               </div>
-              <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Gesamtbenutzer</p>
+              <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Total Users</p>
             </div>
             <div>
               <div className={`text-3xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
                 {users.filter((u) => u.is_active).length}
               </div>
-              <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Aktive Benutzer</p>
+              <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Active Users</p>
             </div>
             <div>
               <div className={`text-3xl font-bold ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
                 {users.filter((u) => u.must_change_password).length}
               </div>
-              <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Passwort ändern</p>
+              <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Change Password</p>
             </div>
           </div>
         </div>
@@ -318,7 +318,7 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
         <div className="mb-6">
           <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
             <Plus size={18} />
-            Neuen Benutzer erstellen
+            Create New User
           </Button>
         </div>
 
@@ -326,11 +326,11 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
         <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg border overflow-hidden`}>
           {loading ? (
             <div className={`p-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Benutzer werden geladen...
+              Loading users...
             </div>
           ) : users.length === 0 ? (
             <div className={`p-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Keine Benutzer gefunden
+              No users found
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -338,7 +338,7 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
                 <thead className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border-b`}>
                   <tr>
                     <th className={`px-6 py-3 text-left text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                      Benutzername
+                      Username
                     </th>
                     <th className={`px-6 py-3 text-left text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
                       Name
@@ -347,10 +347,10 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
                       Status
                     </th>
                     <th className={`px-6 py-3 text-left text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                      Letzter Login
+                      Last Login
                     </th>
                     <th className={`px-6 py-3 text-left text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                      Aktionen
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -383,12 +383,12 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Neuen Benutzer erstellen"
+        title="Create New User"
       >
         <form onSubmit={handleCreateUser} className="space-y-4">
           <Input
             type="text"
-            placeholder="Benutzername"
+            placeholder="Username"
             value={formData.username}
             onChange={(e) =>
               setFormData({ ...formData, username: e.target.value })
@@ -398,7 +398,7 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
 
           <Input
             type="text"
-            placeholder="Vorname"
+            placeholder="First Name"
             value={formData.firstName}
             onChange={(e) =>
               setFormData({ ...formData, firstName: e.target.value })
@@ -408,7 +408,7 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
 
           <Input
             type="text"
-            placeholder="Nachname"
+            placeholder="Last Name"
             value={formData.lastName}
             onChange={(e) =>
               setFormData({ ...formData, lastName: e.target.value })
@@ -419,10 +419,10 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
           {tempPassword && (
             <div className={`p-3 rounded ${isDark ? 'bg-green-900 border border-green-700' : 'bg-green-50 border border-green-200'}`}>
               <p className={`text-sm font-medium ${isDark ? 'text-green-200' : 'text-green-800'}`}>
-                Temporäres Passwort: <span className="font-bold">{tempPassword}</span>
+                Temporary Password: <span className="font-bold">{tempPassword}</span>
               </p>
               <p className={`text-xs mt-1 ${isDark ? 'text-green-300' : 'text-green-700'}`}>
-                Teilen Sie dies sicher mit dem Benutzer. Er muss es beim ersten Login ändern.
+                Share this securely with the user. They must change it on first login.
               </p>
             </div>
           )}
@@ -433,9 +433,9 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
               variant="secondary"
               onClick={() => setShowCreateModal(false)}
             >
-              Abbrechen
+              Cancel
             </Button>
-            <Button type="submit">Benutzer erstellen</Button>
+            <Button type="submit">Create User</Button>
           </div>
         </form>
       </Modal>
@@ -444,20 +444,20 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
       <Modal
         isOpen={showResetModal}
         onClose={() => setShowResetModal(false)}
-        title={`Passwort zurücksetzen für ${selectedUser?.username}`}
+        title={`Reset Password for ${selectedUser?.username}`}
       >
         <div className="space-y-4">
           <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>
-            Passwort für <strong>{selectedUser?.username}</strong> zurücksetzen? Ein neues temporäres Passwort wird generiert.
+            Reset password for <strong>{selectedUser?.username}</strong>? A new temporary password will be generated.
           </p>
 
           {tempPassword && (
             <div className={`p-3 rounded ${isDark ? 'bg-green-900 border border-green-700' : 'bg-green-50 border border-green-200'}`}>
               <p className={`text-sm font-medium ${isDark ? 'text-green-200' : 'text-green-800'}`}>
-                Neues temporäres Passwort: <span className="font-bold">{tempPassword}</span>
+                New Temporary Password: <span className="font-bold">{tempPassword}</span>
               </p>
               <p className={`text-xs mt-1 ${isDark ? 'text-green-300' : 'text-green-700'}`}>
-                Teilen Sie dies sicher mit dem Benutzer. Er muss es ändern.
+                Share this securely with the user. They must change it.
               </p>
             </div>
           )}
@@ -468,13 +468,13 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
               variant="secondary"
               onClick={() => setShowResetModal(false)}
             >
-              Abbrechen
+              Cancel
             </Button>
             <Button
               onClick={handleResetPassword}
               disabled={!!tempPassword}
             >
-              {tempPassword ? 'Passwort zurückgesetzt' : 'Passwort zurücksetzen'}
+              {tempPassword ? 'Password Reset' : 'Reset Password'}
             </Button>
           </div>
         </div>

@@ -17,7 +17,8 @@ router.get('/', authMiddleware, async (req: Request & { userId?: string }, res: 
     }
 
     const result = await pool.query(
-      'SELECT * FROM accounts WHERE user_id = $1 ORDER BY name ASC',
+      `SELECT id, user_id, name, account_type as type, starting_balance as balance, currency, color, icon, is_active, created_at, updated_at 
+       FROM accounts WHERE user_id = $1 ORDER BY name ASC`,
       [req.userId]
     );
     res.json(result.rows);
@@ -44,10 +45,10 @@ router.post('/', authMiddleware, async (req: Request & { userId?: string }, res:
     }
 
     const result = await pool.query(
-      `INSERT INTO accounts (user_id, name, type, balance, currency, color, icon, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, true)
-       RETURNING *`,
-      [req.userId, name, type, balance, currency, color || '#8B5CF6', icon || 'Wallet']
+      `INSERT INTO accounts (user_id, name, account_type, starting_balance, current_balance, currency, color, icon, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
+       RETURNING id, user_id, name, account_type as type, starting_balance as balance, currency, color, icon, is_active, created_at, updated_at`,
+      [req.userId, name, type, balance, balance, currency, color || '#8B5CF6', icon || 'Wallet']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -82,14 +83,15 @@ router.put('/:id', authMiddleware, async (req: Request & { userId?: string }, re
     const result = await pool.query(
       `UPDATE accounts 
        SET name = COALESCE($1, name),
-           type = COALESCE($2, type),
-           balance = COALESCE($3, balance),
+           account_type = COALESCE($2, account_type),
+           starting_balance = COALESCE($3, starting_balance),
+           current_balance = COALESCE($3, current_balance),
            currency = COALESCE($4, currency),
            color = COALESCE($5, color),
            icon = COALESCE($6, icon),
            is_active = COALESCE($7, is_active)
        WHERE id = $8 AND user_id = $9
-       RETURNING *`,
+       RETURNING id, user_id, name, account_type as type, starting_balance as balance, currency, color, icon, is_active, created_at, updated_at`,
       [name, type, balance, currency, color, icon, is_active, id, req.userId]
     );
     

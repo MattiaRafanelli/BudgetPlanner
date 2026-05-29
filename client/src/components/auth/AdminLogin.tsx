@@ -45,7 +45,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md">
         <div className="p-6">
-          <h1 className="text-2xl font-bold mb-2">Admin Login</h1>
+          <h1 className="text-2xl font-bold mb-2">Admin Panel</h1>
           <p className="text-gray-600 mb-6">Budget Planner Administration</p>
 
           {error && <Alert variant="error">{error}</Alert>}

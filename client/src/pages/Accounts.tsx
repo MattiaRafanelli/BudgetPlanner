@@ -43,9 +43,20 @@ export function Accounts() {
   };
 
   const handleDeleteAccount = (id: string) => {
-    if (window.confirm('Delete this account and all its transactions?')) {
-      // Send DELETE request to backend
-      fetch(`/api/accounts/${id}`, { method: 'DELETE' })
+    if (window.confirm('Dieses Konto und alle dazugeh\u00f6rigen Transaktionen l\u00f6schen?')) {
+      // Send DELETE request to backend with auth token
+      const session = sessionStorage.getItem('userSession');
+      let headers: Record<string, string> = {};
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          headers['Authorization'] = `Bearer ${parsed.token}`;
+        } catch {
+          console.warn('Could not parse session');
+        }
+      }
+      
+      fetch(`/api/accounts/${id}`, { method: 'DELETE', headers })
         .catch(error => console.error('Failed to delete account from backend:', error));
       
       // Update local state
@@ -64,7 +75,7 @@ export function Accounts() {
 
   return (
     <>
-      <TopBar title="Konten" hidePeriodSelector={true} />
+      <TopBar title="Accounts" hidePeriodSelector={true} />
       <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <PageContainer>
         <div className="space-y-6">
@@ -72,7 +83,7 @@ export function Accounts() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {accounts.filter((a) => !a.isArchived).length} Konto
+                {accounts.filter((a) => !a.isArchived).length} Account
                 {accounts.filter((a) => !a.isArchived).length !== 1 ? 's' : ''}
               </h2>
             </div>
@@ -83,7 +94,7 @@ export function Accounts() {
               }}
               icon={<Plus size={16} />}
             >
-              Neues Konto
+              New Account
             </Button>
           </div>
 
@@ -108,8 +119,9 @@ export function Accounts() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: `${selected.color}20` }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center color-dynamic"
+                    // @ts-expect-error CSS-in-JS for dynamic colors
+                    style={{ '--color': `${selected.color}20` }}
                   >
                     <DynamicIcon
                       name={ACCOUNT_TYPE_ICONS[selected.type]}

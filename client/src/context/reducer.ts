@@ -6,6 +6,7 @@ export const initialState: AppState = {
   transactions: [],
   budgetLimits: [],
   customCategories: [],
+  hiddenBuiltInCategories: [],
   activePeriod: {
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
@@ -128,6 +129,22 @@ export function reducer(state: AppState, action: AppAction): AppState {
 
     case 'SET_TRANSACTIONS':
       return { ...state, transactions: action.payload };
+
+    case 'HIDE_BUILTIN_CATEGORY':
+      return {
+        ...state,
+        hiddenBuiltInCategories: state.hiddenBuiltInCategories.includes(action.payload.id)
+          ? state.hiddenBuiltInCategories
+          : [...state.hiddenBuiltInCategories, action.payload.id],
+      };
+
+    case 'SHOW_BUILTIN_CATEGORY':
+      return {
+        ...state,
+        hiddenBuiltInCategories: state.hiddenBuiltInCategories.filter(
+          (id) => id !== action.payload.id
+        ),
+      };
 
     default:
       return state;

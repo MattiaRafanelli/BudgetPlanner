@@ -43,7 +43,7 @@ export function useSyncData(
             initialBalance: acc.balance || 0,
             color: acc.color || '#8B5CF6',
             icon: acc.icon || 'Wallet',
-            isArchived: !acc.is_active || false,
+            isArchived: acc.is_active === false,
             createdAt: acc.created_at || new Date().toISOString(),
           }));
           dispatch({ type: 'SET_ACCOUNTS', payload: transformedAccounts });

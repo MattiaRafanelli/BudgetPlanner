@@ -40,12 +40,14 @@ export function TopBar({ title, onAddTransaction, onLogout, hidePeriodSelector =
         {!hidePeriodSelector && (
         <div className="flex items-center gap-0.5 bg-elevated border border-border rounded-xl px-1 py-1">
           <button
+            title="Previous month"
             onClick={prevMonth}
             className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-border transition-colors"
           >
             <ChevronLeft size={15} />
           </button>
           <button
+            title="Go to today"
             onClick={() =>
               dispatch({
                 type: 'SET_PERIOD',
@@ -61,6 +63,7 @@ export function TopBar({ title, onAddTransaction, onLogout, hidePeriodSelector =
             <span className="hidden md:inline">{MONTHS[month - 1]} {year}</span>
           </button>
           <button
+            title="Next month"
             onClick={nextMonth}
             className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-border transition-colors"
           >
@@ -74,6 +77,7 @@ export function TopBar({ title, onAddTransaction, onLogout, hidePeriodSelector =
           <>
             {/* Mobile: icon-only round button */}
             <button
+              title="Add transaction"
               onClick={onAddTransaction}
               className="md:hidden w-9 h-9 flex items-center justify-center bg-accent-primary hover:bg-[#5a52e0] rounded-xl text-white transition-colors"
             >

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Transaction, TransactionType, Account } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useCategories } from '@/hooks/useCategories';
+import { useCategoryLookup } from '@/hooks/useCategoryLookup';
 import { getPaydayString } from '@/utils/payday';
 
 interface TransactionFormProps {
@@ -18,13 +19,57 @@ interface TransactionFormProps {
 
 const typeOptions: { value: TransactionType; label: string }[] = [
   { value: 'expense', label: 'Expense' },
-  { value: 'income',  label: 'Income'  },
-  { value: 'transfer',label: 'Transfer'},
+  { value: 'income', label: 'Income' },
+  { value: 'transfer', label: 'Transfer' },
 ];
 
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
+
+interface FormState {
+  type: TransactionType;
+  amount: string;
+  category: string;
+  description: string;
+  date: string;
+  accountId: string;
+  toAccountId: string;
+  lastExpenseCategory: string;
+  lastIncomeCategory: string;
+}
+
+const getInitialState = (
+  initial: Transaction | null | undefined,
+  defaultAccountId: string | undefined,
+  accounts: Account[]
+): FormState => {
+  if (initial) {
+    return {
+      type: initial.type,
+      amount: String(initial.amount),
+      category: initial.category,
+      description: initial.description,
+      date: initial.date,
+      accountId: initial.accountId,
+      toAccountId: initial.toAccountId ?? '',
+      lastExpenseCategory: 'food',
+      lastIncomeCategory: 'salary',
+    };
+  }
+
+  return {
+    type: 'expense',
+    amount: '',
+    category: 'food',
+    description: '',
+    date: today(),
+    accountId: defaultAccountId ?? accounts[0]?.id ?? '',
+    toAccountId: '',
+    lastExpenseCategory: 'food',
+    lastIncomeCategory: 'salary',
+  };
+};
 
 export function TransactionForm({
   isOpen,
@@ -35,123 +80,189 @@ export function TransactionForm({
   defaultAccountId,
 }: TransactionFormProps) {
   const { getGroupedExpenseOptions, getGroupedIncomeOptions } = useCategories();
+  const { getCategoryId } = useCategoryLookup();
 
-  const [type, setType]               = useState<TransactionType>('expense');
-  const [amount, setAmount]           = useState('');
-  const [category, setCategory]       = useState('food');
-  const [description, setDescription] = useState('');
-  const [date, setDate]               = useState(today());
-  const [accountId, setAccountId]     = useState(defaultAccountId ?? accounts[0]?.id ?? '');
-  const [toAccountId, setToAccountId] = useState('');
-  const [errors, setErrors]           = useState<Record<string, string>>({});
+  const [formState, setFormState] = useState<FormState>(
+    getInitialState(initial, defaultAccountId, accounts)
+  );
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Reset form when modal opens
   useEffect(() => {
-    if (initial) {
-      setType(initial.type);
-      setAmount(String(initial.amount));
-      setCategory(initial.category);
-      setDescription(initial.description);
-      setDate(initial.date);
-      setAccountId(initial.accountId);
-      setToAccountId(initial.toAccountId ?? '');
-    } else {
-      setType('expense');
-      setAmount('');
-      setCategory('food');
-      setDescription('');
-      setDate(today());
-      setAccountId(defaultAccountId ?? accounts[0]?.id ?? '');
-      setToAccountId('');
+    if (isOpen) {
+      setFormState(getInitialState(initial, defaultAccountId, accounts));
+      setErrors({});
     }
-    setErrors({});
-  }, [isOpen, initial, defaultAccountId, accounts]);
+  }, [isOpen]);
 
-  useEffect(() => {
-    if (type === 'income') {
-      setCategory('salary');
-      // Set date to payday (1st of month, or Friday if weekend)
-      setDate(getPaydayString());
-    }
-    else if (type === 'expense') {
-      setCategory('food');
-      setDate(today());
-    }
-    else if (type === 'transfer') {
-      const firstOther = accounts.find((a) => a.id !== accountId);
-      setToAccountId(firstOther?.id ?? '');
-      setDate(today());
-    }
-  }, [type, accountId, accounts]);
+  const handleTypeChange = useCallback((newType: TransactionType) => {
+    setFormState((prev) => {
+      // Speichere die aktuelle Kategorie für den aktuellen Type
+      let updatedState = { ...prev };
+      
+      if (prev.type === 'expense') {
+        updatedState.lastExpenseCategory = prev.category;
+      } else if (prev.type === 'income') {
+        updatedState.lastIncomeCategory = prev.category;
+      }
 
-  const validate = () => {
+      // Wechsle zum neuen Type und setze die gespeicherte Kategorie
+      updatedState.type = newType;
+      
+      if (newType === 'expense') {
+        updatedState.category = updatedState.lastExpenseCategory;
+        updatedState.date = today();
+      } else if (newType === 'income') {
+        updatedState.category = updatedState.lastIncomeCategory;
+        updatedState.date = getPaydayString();
+      } else if (newType === 'transfer') {
+        updatedState.date = today();
+        const firstOther = accounts.find((a) => a.id !== updatedState.accountId);
+        updatedState.toAccountId = firstOther?.id ?? '';
+      }
+
+      return updatedState;
+    });
+  }, [accounts]);
+
+  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState((prev) => ({ ...prev, amount: e.target.value }));
+  }, []);
+
+  const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState((prev) => ({ ...prev, date: e.target.value }));
+  }, []);
+
+  const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormState((prev) => {
+      const newCategory = e.target.value;
+      const updated = { ...prev, category: newCategory };
+
+      // Speichere auch in lastExpenseCategory oder lastIncomeCategory
+      if (prev.type === 'expense') {
+        updated.lastExpenseCategory = newCategory;
+      } else if (prev.type === 'income') {
+        updated.lastIncomeCategory = newCategory;
+      }
+
+      return updated;
+    });
+  }, []);
+
+  const handleAccountChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormState((prev) => ({ ...prev, accountId: e.target.value }));
+  }, []);
+
+  const handleToAccountChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormState((prev) => ({ ...prev, toAccountId: e.target.value }));
+  }, []);
+
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState((prev) => ({ ...prev, description: e.target.value }));
+  }, []);
+
+  const validate = (): Record<string, string> => {
     const errs: Record<string, string> = {};
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
+
+    if (!formState.amount || isNaN(Number(formState.amount)) || Number(formState.amount) <= 0) {
       errs.amount = 'Enter a valid amount';
-    if (!accountId) errs.accountId = 'Select an account';
-    if (type === 'transfer' && !toAccountId)       errs.toAccountId = 'Select destination account';
-    if (type === 'transfer' && toAccountId === accountId) errs.toAccountId = 'Must be different from source';
+    }
+
+    if (!formState.accountId) {
+      errs.accountId = 'Select an account';
+    }
+
+    if (formState.type === 'transfer' && !formState.toAccountId) {
+      errs.toAccountId = 'Select destination account';
+    }
+
+    if (formState.type === 'transfer' && formState.toAccountId === formState.accountId) {
+      errs.toAccountId = 'Must be different from source';
+    }
+
     return errs;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     const errs = validate();
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+
     const now = new Date().toISOString();
     const tx: Transaction = {
-      id:          initial?.id ?? uuidv4(),
-      accountId,
-      toAccountId: type === 'transfer' ? toAccountId : undefined,
-      type,
-      category,
-      amount:      Number(amount),
-      description: description.trim(),
-      date,
+      id: initial?.id ?? uuidv4(),
+      accountId: formState.accountId,
+      toAccountId: formState.type === 'transfer' ? formState.toAccountId : undefined,
+      type: formState.type,
+      category: formState.category,
+      amount: Number(formState.amount),
+      description: formState.description.trim(),
+      date: formState.date,
       recurrence: 'none',
       tags: [],
-      createdAt:   initial?.createdAt ?? now,
-      updatedAt:   now,
+      createdAt: initial?.createdAt ?? now,
+      updatedAt: now,
     };
 
-    // Send to backend with correct field names (snake_case)
+    // Send to backend
     try {
       const method = initial ? 'PUT' : 'POST';
       const url = initial ? `/api/transactions/${tx.id}` : '/api/transactions';
-      
+
+      // Get auth token
+      const session = sessionStorage.getItem('userSession');
+      let token = '';
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          token = parsed.token;
+        } catch {
+          console.warn('Could not parse session');
+        }
+      }
+
       // Transform for backend
       const backendPayload = {
         account_id: tx.accountId,
-        category_id: tx.category,
+        category_id: getCategoryId(tx.category),
         amount: tx.amount,
         type: tx.type,
         description: tx.description,
         date: tx.date,
       };
 
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        method,
+        headers,
         body: JSON.stringify(backendPayload),
       });
-      
+
       if (response.ok) {
-        console.log("Erfolgreich an Backend gesendet!");
+        console.log('Successfully sent to backend!');
       } else {
-        console.error("Backend error:", response.status);
+        console.error('Backend error:', response.status);
       }
     } catch (error) {
-      console.error("Fehler beim Senden an die Datenbank:", error);
+      console.error('Error sending to database:', error);
     }
 
     onSave(tx);
     onClose();
   };
 
-  const groups = type === 'income'
-    ? getGroupedIncomeOptions()
-    : getGroupedExpenseOptions();
+  const groups =
+    formState.type === 'income'
+      ? getGroupedIncomeOptions()
+      : getGroupedExpenseOptions();
 
   const accountOptions = accounts.map((a) => ({ value: a.id, label: a.name }));
 
@@ -168,9 +279,11 @@ export function TransactionForm({
             <button
               key={opt.value}
               type="button"
-              onClick={() => setType(opt.value)}
+              onClick={() => handleTypeChange(opt.value)}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                type === opt.value ? 'bg-accent-primary text-white' : 'text-text-muted hover:text-text-primary'
+                formState.type === opt.value
+                  ? 'bg-accent-primary text-white'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               {opt.label}
@@ -181,28 +294,32 @@ export function TransactionForm({
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="Amount"
-            type="number" min="0" step="0.01" placeholder="0.00"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            value={formState.amount}
+            onChange={handleAmountChange}
             error={errors.amount}
           />
           <Input
             label="Date"
             type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            value={formState.date}
+            onChange={handleDateChange}
           />
         </div>
 
-        {/* Category select — grouped with subcategories */}
-        {type !== 'transfer' && (
+        {/* Category select */}
+        {formState.type !== 'transfer' && (
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-text-secondary uppercase tracking-wide">
               Category
             </label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              title="Select transaction category"
+              value={formState.category}
+              onChange={handleCategoryChange}
               className="w-full bg-elevated border border-border rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30 transition-all"
             >
               {groups.map(({ parent, children }) => (
@@ -210,7 +327,8 @@ export function TransactionForm({
                   <option value={parent.id}>{parent.name}</option>
                   {children.map((child) => (
                     <option key={child.id} value={child.id}>
-                      {'  ↳ '}{child.name}
+                      {'  ↳ '}
+                      {child.name}
                     </option>
                   ))}
                 </optgroup>
@@ -222,46 +340,68 @@ export function TransactionForm({
         {/* Account selects */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium text-text-secondary uppercase tracking-wide">
-            {type === 'transfer' ? 'From Account' : 'Account'}
+            {formState.type === 'transfer' ? 'From Account' : 'Account'}
           </label>
           <select
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
+            title={
+              formState.type === 'transfer'
+                ? 'Select source account'
+                : 'Select account'
+            }
+            value={formState.accountId}
+            onChange={handleAccountChange}
             className="w-full bg-elevated border border-border rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-primary transition-all"
           >
             {accountOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
-          {errors.accountId && <span className="text-xs text-accent-red">{errors.accountId}</span>}
+          {errors.accountId && (
+            <span className="text-xs text-accent-red">{errors.accountId}</span>
+          )}
         </div>
 
-        {type === 'transfer' && (
+        {formState.type === 'transfer' && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-text-secondary uppercase tracking-wide">To Account</label>
+            <label className="text-xs font-medium text-text-secondary uppercase tracking-wide">
+              To Account
+            </label>
             <select
-              value={toAccountId}
-              onChange={(e) => setToAccountId(e.target.value)}
+              title="Select destination account"
+              value={formState.toAccountId}
+              onChange={handleToAccountChange}
               className="w-full bg-elevated border border-border rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-primary transition-all"
             >
-              {accountOptions.filter((a) => a.value !== accountId).map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
+              {accountOptions
+                .filter((a) => a.value !== formState.accountId)
+                .map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
             </select>
-            {errors.toAccountId && <span className="text-xs text-accent-red">{errors.toAccountId}</span>}
+            {errors.toAccountId && (
+              <span className="text-xs text-accent-red">{errors.toAccountId}</span>
+            )}
           </div>
         )}
 
         <Input
           label="Description (optional)"
           placeholder="What was this for?"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          value={formState.description}
+          onChange={handleDescriptionChange}
         />
 
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit">{initial ? 'Save Changes' : 'Add Transaction'}</Button>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {initial ? 'Save Changes' : 'Add Transaction'}
+          </Button>
         </div>
       </form>
     </Modal>
