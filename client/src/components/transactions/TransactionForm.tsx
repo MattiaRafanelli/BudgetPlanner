@@ -15,6 +15,7 @@ interface TransactionFormProps {
   accounts: Account[];
   initial?: Transaction | null;
   defaultAccountId?: string;
+  defaultDate?: Date | null;
 }
 
 const typeOptions: { value: TransactionType; label: string }[] = [
@@ -42,7 +43,8 @@ interface FormState {
 const getInitialState = (
   initial: Transaction | null | undefined,
   defaultAccountId: string | undefined,
-  accounts: Account[]
+  accounts: Account[],
+  defaultDate: Date | null | undefined
 ): FormState => {
   if (initial) {
     return {
@@ -58,12 +60,20 @@ const getInitialState = (
     };
   }
 
+  let dateValue = today();
+  if (defaultDate) {
+    const year = defaultDate.getFullYear();
+    const month = String(defaultDate.getMonth() + 1).padStart(2, '0');
+    const day = String(defaultDate.getDate()).padStart(2, '0');
+    dateValue = `${year}-${month}-${day}`;
+  }
+
   return {
     type: 'expense',
     amount: '',
     category: 'food',
     description: '',
-    date: today(),
+    date: dateValue,
     accountId: defaultAccountId ?? accounts[0]?.id ?? '',
     toAccountId: '',
     lastExpenseCategory: 'food',
@@ -78,22 +88,23 @@ export function TransactionForm({
   accounts,
   initial,
   defaultAccountId,
+  defaultDate,
 }: TransactionFormProps) {
   const { getGroupedExpenseOptions, getGroupedIncomeOptions } = useCategories();
   const { getCategoryId } = useCategoryLookup();
 
   const [formState, setFormState] = useState<FormState>(
-    getInitialState(initial, defaultAccountId, accounts)
+    getInitialState(initial, defaultAccountId, accounts, defaultDate)
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setFormState(getInitialState(initial, defaultAccountId, accounts));
+      setFormState(getInitialState(initial, defaultAccountId, accounts, defaultDate));
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, defaultDate]);
 
   const handleTypeChange = useCallback((newType: TransactionType) => {
     setFormState((prev) => {
@@ -178,6 +189,13 @@ export function TransactionForm({
 
     if (formState.type === 'transfer' && formState.toAccountId === formState.accountId) {
       errs.toAccountId = 'Must be different from source';
+    }
+
+    // Check that date is not in the future
+    const selectedDate = new Date(formState.date);
+    const todayDate = new Date(today());
+    if (selectedDate > todayDate) {
+      errs.date = 'Cannot add transactions in the future';
     }
 
     return errs;
@@ -307,6 +325,8 @@ export function TransactionForm({
             type="date"
             value={formState.date}
             onChange={handleDateChange}
+            max={today()}
+            error={errors.date}
           />
         </div>
 

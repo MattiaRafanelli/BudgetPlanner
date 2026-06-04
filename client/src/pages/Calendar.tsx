@@ -56,6 +56,7 @@ export const Calendar = () => {
         accounts={accounts}
         initial={selectedTransaction}
         defaultAccountId={accounts[0]?.id}
+        defaultDate={selectedDate}
       />
     </>
   );
